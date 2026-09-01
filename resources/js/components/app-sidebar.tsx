@@ -63,11 +63,6 @@ const mainNavItems: NavItem[] = [
                 href: '/contact',
                 icon: Mail,
             },
-            {
-                title: 'Newsletters',
-                href: '/newsletter',
-                icon: Newspaper,
-            },
         ],
     },
 ];

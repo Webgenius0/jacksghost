@@ -4,9 +4,7 @@ namespace App\Http\Controllers\API\DynamicPage;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DynamicPageResource;
-use App\Http\Resources\ManufacturingProofResource;
 use App\Models\DynamicPage;
-use App\Models\SystemSetting;
 use App\Traits\ApiResponse;
 
 class DynamicPageController extends Controller
@@ -38,15 +36,16 @@ class DynamicPageController extends Controller
 
         return $this->error('Data not found', 500);
     }
-
-    public function proofOfManufacturing()
+    public function disclaimer()
     {
-        $systemSetting = SystemSetting::first();
+        $data = DynamicPage::where('status', 'Active')
+            ->where('page_slug', 'disclaimer')
+            ->first();
 
-        if (!$systemSetting) {
-            return $this->error('Data not found', 500);
+        if ($data) {
+            return $this->success('Data Retrieve Successfully!', new DynamicPageResource($data), 200);
         }
 
-        return $this->success('Data Retrieve Successfully!', new ManufacturingProofResource($systemSetting), 200);
+        return $this->error('Data not found', 500);
     }
 }

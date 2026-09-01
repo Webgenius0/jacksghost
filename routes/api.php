@@ -14,7 +14,6 @@ use App\Http\Controllers\API\Track\TrackController;
 use App\Http\Controllers\API\User\UserController;
 use App\Http\Controllers\API\SystemSetting\SystemSettingController;
 use App\Http\Controllers\API\Contact\ContactController;
-use App\Http\Controllers\API\Newsletter\NewsletterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -40,13 +39,11 @@ Route::middleware(['guest'])->group(function () {
 //dynamic page
 Route::get('/terms-of-service', [DynamicPageController::class, 'termsOfService']);
 Route::get('/privacy-policy', [DynamicPageController::class, 'privacyPolicy']);
+Route::get('/disclaimer', [DynamicPageController::class, 'disclaimer']);
 
 //system settings
 Route::get('/system-info', [SystemSettingController::class, 'systemInfo']);
 Route::get('/social-links', [SystemSettingController::class, 'socialLinks']);
-
-// Newsletter
-Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe']);
 
 
 // faq

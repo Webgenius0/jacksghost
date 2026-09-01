@@ -20,7 +20,6 @@ interface DashboardProps {
     stats: {
         total_users: number;
         total_contacts: number;
-        total_newsletters: number;
     };
 }
 
@@ -43,15 +42,6 @@ export default function Dashboard({ stats }: DashboardProps) {
             color: 'text-rose-600',
             bg: 'bg-rose-100 dark:bg-rose-900/30',
             href: '/contact',
-        },
-        {
-            title: 'Newsletter Subscribers',
-            value: stats.total_newsletters,
-            icon: Mail,
-            description: 'Active newsletter subscribers',
-            color: 'text-cyan-600',
-            bg: 'bg-cyan-100 dark:bg-cyan-900/30',
-            href: '/newsletter',
         },
     ];
 

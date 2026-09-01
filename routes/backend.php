@@ -6,7 +6,6 @@ use App\Http\Controllers\Web\Admin\User\UserController;
 use App\Http\Controllers\Web\Admin\Faq\FaqController;
 use App\Http\Controllers\Web\Admin\DynamicPage\DynamicPageController;
 use App\Http\Controllers\Web\Admin\Notification\NotificationController;
-use App\Http\Controllers\Web\Admin\Newsletter\NewsletterController;
 use App\Http\Controllers\Web\Admin\League\LeagueController;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -31,8 +30,6 @@ Route::patch('/faq/{faq}/status', [FaqController::class, 'updateStatus'])->name(
 Route::resource('/faq', FaqController::class);
 
 Route::resource('/contact', ContactController::class);
-
-Route::resource('/newsletter', NewsletterController::class)->only(['index', 'destroy']);
 
 Route::resource('/league', LeagueController::class);
 Route::resource('/league-content', \App\Http\Controllers\Web\Admin\League\LeagueContentController::class);
