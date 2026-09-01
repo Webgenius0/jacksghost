@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Traits\ImagePathTrait;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class AgentResource extends JsonResource
+{
+    use ImagePathTrait;
+
+    public function toArray(Request $request): array
+    {
+        return [
+            'id'               => $this->id,
+            'user_id'          => $this->user_id,
+            'agent_name'       => $this->agent_name,
+            'agency_name'      => $this->agency_name,
+            'slug'             => $this->slug,
+            'agent_photo'      => $this->agent_photo,
+            'agent_photo_url'  => $this->agent_photo ? $this->fullImageUrlForApi($this->agent_photo) : null,
+            'institution_name' => $this->institution_name,
+            'degree'           => $this->degree,
+            'graduation_year'  => $this->graduation_year,
+            'address'          => $this->address,
+            'phone_number'     => $this->phone_number,
+            'email'            => $this->email,
+            'background_info'  => $this->background_info,
+            'status'           => $this->status,
+            'payment_status'   => $this->payment_status,
+            'services'         => $this->whenLoaded('services', function () {
+                return $this->services->map(fn($s) => [
+                    'id'           => $s->id,
+                    'service_name' => $s->service_name,
+                ]);
+            }),
+            'certifications'   => $this->whenLoaded('certifications', function () {
+                return $this->certifications->map(fn($c) => [
+                    'id'               => $c->id,
+                    'certificate_name' => $c->certificate_name,
+                    'certificate_file' => $c->certificate_file,
+                    'certificate_file_url' => $c->certificate_file
+                        ? $this->fullImageUrlForApi($c->certificate_file)
+                        : null,
+                ]);
+            }),
+            'created_at'       => $this->created_at,
+        ];
+    }
+}
