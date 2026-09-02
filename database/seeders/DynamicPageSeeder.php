@@ -25,6 +25,11 @@ class DynamicPageSeeder extends Seeder
                 'page_slug' => 'privacy-policy',
                 'page_content' => 'Privacy Policy',
             ],
+            [
+                'page_title' => 'Disclaimer',
+                'page_slug' => 'disclaimer',
+                'page_content' => 'Disclaimer',
+            ],
         ];
 
         foreach ($pages as $page) {

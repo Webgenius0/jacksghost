@@ -173,3 +173,62 @@ export interface PaginatedLeagueContents {
         active: boolean;
     }[];
 }
+
+export interface Year {
+    id: number;
+    year: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedYears {
+    data: Year[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+}
+
+export interface DraftPlayer {
+    id: number;
+    league_id: number;
+    year: number | null;
+    round: number | null;
+    pick: number | null;
+    player_name: string | null;
+    position: string | null;
+    school: string | null;
+    slug: string | null;
+    agent_id: number | null;
+    agent_name: string | null;
+    agency_name: string | null;
+    height: string | null;
+    weight: string | null;
+    birthdate: string | null;
+    nationality: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    league?: League;
+    agent?: { id: number; agent_name: string };
+}
+
+export interface PaginatedDraftPlayers {
+    data: DraftPlayer[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+}
+
+

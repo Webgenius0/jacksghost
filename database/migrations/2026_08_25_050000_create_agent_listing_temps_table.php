@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('agent_listing_temps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('payment_intent_id')->unique();
+            $table->string('stripe_session_id')->unique();
             $table->longText('form_data'); // JSON blob of all form fields
             $table->string('payment_status')->default('pending'); // pending | succeeded | failed
             $table->timestamps();

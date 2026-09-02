@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Model;
 
 class DraftPlayer extends Model
 {
+    use Searchable;
+
     protected $fillable = [
         'league_id',
         'year',
@@ -26,12 +29,15 @@ class DraftPlayer extends Model
     ];
 
     protected $casts = [
-        'birthdate' => 'date',
+        'year'       => 'integer',
+        'round'      => 'integer',
+        'pick'       => 'integer',
+        'birthdate'  => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    public function draftLeague()
+    public function league()
     {
         return $this->belongsTo(League::class);
     }
@@ -41,3 +47,4 @@ class DraftPlayer extends Model
         return $this->belongsTo(Agents::class, 'agent_id');
     }
 }
+

@@ -28,6 +28,10 @@ class DatabaseSeeder extends Seeder
             SystemSettingSeeder::class,
             DynamicPageSeeder::class,
             SocialLinkSeeder::class,
+            FaqSeeder::class,
+            YearSeeder::class,
+            LeagueSeeder::class,
+            DraftPlayerSeeder::class,
         ]);
     }
 }

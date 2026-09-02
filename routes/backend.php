@@ -7,6 +7,8 @@ use App\Http\Controllers\Web\Admin\Faq\FaqController;
 use App\Http\Controllers\Web\Admin\DynamicPage\DynamicPageController;
 use App\Http\Controllers\Web\Admin\Notification\NotificationController;
 use App\Http\Controllers\Web\Admin\League\LeagueController;
+use App\Http\Controllers\Web\Admin\League\DraftPlayerController;
+use App\Http\Controllers\Web\Admin\Year\YearController;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -33,3 +35,6 @@ Route::resource('/contact', ContactController::class);
 
 Route::resource('/league', LeagueController::class);
 Route::resource('/league-content', \App\Http\Controllers\Web\Admin\League\LeagueContentController::class);
+Route::resource('/draft-player', DraftPlayerController::class);
+Route::resource('/year', YearController::class);
+

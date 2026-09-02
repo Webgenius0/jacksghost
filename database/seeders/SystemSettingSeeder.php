@@ -14,15 +14,15 @@ class SystemSettingSeeder extends Seeder
     public function run(): void
     {
         SystemSetting::create([
-            'title' => 'XYZ',
-            'system_name' => 'XYZ',
-            'email' => 'info@gmail.com',
+            'title' => 'Sports Agent Directory',
+            'system_name' => 'Sports Agent Directory',
+            'email' => 'support@gmail.com',
             'number' => '+12120000000',
             'logo' => null,
             'favicon' => null,
             'address' => null,
-            'copyright_text' => 'Copyright 2026. All Rights Reserved. Powered by XYZ.',
-            'description' => null,
+            'copyright_text' => '© 1997 - 2026 - Sports Agent Directory - All Rights Reserved',
+            'description' => 'The trusted directory connecting athletes with verified sports agents across every major league — since 1997.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

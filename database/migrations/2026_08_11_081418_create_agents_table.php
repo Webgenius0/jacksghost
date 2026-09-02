@@ -28,6 +28,8 @@ return new class extends Migration
             $table->longText('background_info')->nullable();
             $table->text('notable_client')->nullable();
             $table->string('status')->default('active');
+            $table->string('payment_intent_id')->nullable();
+            $table->string('payment_status')->nullable()->default('pending');
             $table->timestamps();
         });
     }

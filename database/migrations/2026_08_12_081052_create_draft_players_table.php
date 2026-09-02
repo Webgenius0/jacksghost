@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('draft_players', function (Blueprint $table) {
             $table->id();
             $table->foreignId('league_id')->constrained()->cascadeOnDelete();
-            $table->string('year')->nullable();
+            $table->unsignedSmallInteger('year')->nullable();
             $table->integer('round')->nullable();
             $table->integer('pick')->nullable();
             $table->string('player_name')->nullable();
@@ -30,6 +30,8 @@ return new class extends Migration
             $table->string('nationality')->nullable();
             $table->string('status')->default('unsigned_draft');
             $table->timestamps();
+
+            $table->index(['league_id', 'year']);
         });
     }
 
