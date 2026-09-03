@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('agents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('agent_photo')->nullable();
             $table->string('agent_name')->nullable();
             $table->string('slug')->nullable();

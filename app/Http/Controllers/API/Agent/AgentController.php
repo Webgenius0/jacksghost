@@ -28,9 +28,9 @@ class AgentController extends Controller
     /**
      * Returns a hosted checkout URL — the frontend redirects the user there to pay.
      */
-    public function createCheckoutSession(StoreAgentListingRequest $request): JsonResponse
+    public function createAgentListingProfile(StoreAgentListingRequest $request): JsonResponse
     {
-        $user = Auth::user();
+        $email = $request->email ?? (Auth::user()?->email ?? null);
 
         $agentPhotoPath = null;
         if ($request->hasFile('agent_photo')) {
@@ -72,15 +72,14 @@ class AgentController extends Controller
             'certifications'   => $certifications,
             'address'          => $request->address,
             'phone_number'     => $request->phone_number,
-            'email'            => $request->email ?? $user->email,
+            'email'            => $email,
             'bio'              => $request->bio,
         ];
 
         $frontendUrl = rtrim(config('app.frontend_url', config('app.url')), '/');
 
-        $session = $this->stripe->checkout->sessions->create([
+        $sessionParams = [
             'mode'         => 'payment',
-            'customer_email' => $user->email,
             'line_items'   => [
                 [
                     'price_data' => [
@@ -97,21 +96,24 @@ class AgentController extends Controller
             'success_url'  => $frontendUrl . '/agent/listing-success?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'   => $frontendUrl . '/agent/listing-cancelled',
             'metadata'     => [
-                'user_id'    => $user->id,
-                'user_email' => $user->email,
+                'agent_name' => $request->agent_name,
+                'email'      => $email,
                 'type'       => 'agent_listing',
             ],
-        ]);
+        ];
+
+        if ($email) {
+            $sessionParams['customer_email'] = $email;
+        }
+
+        $session = $this->stripe->checkout->sessions->create($sessionParams);
 
         // Store form data temporarily — deleted after webhook confirms payment
-        AgentListingTemp::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'stripe_session_id' => $session->id,
-                'form_data'         => $formData,
-                'payment_status'    => 'pending',
-            ]
-        );
+        AgentListingTemp::create([
+            'stripe_session_id' => $session->id,
+            'form_data'         => $formData,
+            'payment_status'    => 'pending',
+        ]);
 
         return $this->success('Checkout session created. Redirect the user to the checkout URL.', [
             'checkout_url' => $session->url,
@@ -127,11 +129,7 @@ class AgentController extends Controller
             'session_id' => ['required', 'string'],
         ]);
 
-        $user = Auth::user();
-
-        $temp = AgentListingTemp::where('user_id', $user->id)
-            ->where('stripe_session_id', $request->session_id)
-            ->first();
+        $temp = AgentListingTemp::where('stripe_session_id', $request->session_id)->first();
 
         if (!$temp) {
             return $this->error('No pending listing found for this session.', 404);
@@ -140,7 +138,6 @@ class AgentController extends Controller
         // Already processed by webhook?
         if ($temp->payment_status === 'succeeded') {
             $agent = Agents::where('payment_intent_id', $request->session_id)
-                ->orWhere('user_id', $user->id)
                 ->whereIn('payment_status', ['succeeded', 'paid'])
                 ->first();
 
@@ -161,7 +158,7 @@ class AgentController extends Controller
             );
         }
 
-        $agent = $this->createAgentFromTemp($temp, $user->id, $session->payment_intent);
+        $agent = $this->createAgentFromTemp($temp, $session->payment_intent);
 
         return $this->success(
             'Your agent listing has been submitted successfully!',
@@ -174,14 +171,13 @@ class AgentController extends Controller
      * Create an agent record from temp data.
      * Shared between webhook handler and verifySession fallback.
      */
-    public static function createAgentFromTemp(AgentListingTemp $temp, int $userId, ?string $paymentIntentId = null): Agents
+    public static function createAgentFromTemp(AgentListingTemp $temp, ?string $paymentIntentId = null): Agents
     {
         $data = $temp->form_data;
 
         $slug = Helper::makeSlug(Agents::class, $data['agent_name']);
 
         $agent = Agents::create([
-            'user_id'           => $userId,
             'agent_name'        => $data['agent_name'],
             'agency_name'       => $data['agency_name'] ?? null,
             'agent_photo'       => $data['agent_photo'] ?? null,
@@ -224,22 +220,5 @@ class AgentController extends Controller
         $temp->delete();
 
         return $agent;
-    }
-
-    /**
-     * Get the authenticated user's agent profile.
-     */
-    public function myListing(): JsonResponse
-    {
-        $user  = Auth::user();
-        $agent = Agents::where('user_id', $user->id)
-            ->with(['services', 'certifications'])
-            ->first();
-
-        if (!$agent) {
-            return $this->error('No agent listing found.', 404);
-        }
-
-        return $this->success('Agent listing retrieved successfully.', new AgentResource($agent));
     }
 }

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Agents extends Model
 {
     protected $fillable = [
-        'user_id',
         'agent_photo',
         'agent_name',
         'slug',
@@ -30,11 +29,6 @@ class Agents extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function certifications()
     {

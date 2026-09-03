@@ -91,13 +91,12 @@ class AgentWebhookController extends Controller
             // payment_intent is the underlying PaymentIntent ID (pi_xxx)
             $paymentIntentId = $session->payment_intent ?? null;
 
-            AgentController::createAgentFromTemp($temp, $temp->user_id, $paymentIntentId);
+            AgentController::createAgentFromTemp($temp, $paymentIntentId);
 
-            Log::info('[AgentWebhook] Agent listing created for user_id: ' . $temp->user_id);
+            Log::info('[AgentWebhook] Agent listing created for session: ' . $sessionId);
         } catch (\Throwable $e) {
             Log::error('[AgentWebhook] Failed to create agent listing: ' . $e->getMessage(), [
                 'session_id' => $sessionId,
-                'user_id'    => $temp->user_id,
             ]);
         }
     }

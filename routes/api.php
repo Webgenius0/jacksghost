@@ -61,9 +61,12 @@ Route::get('/leagues/{leagueId}/contents', [LeagueContentController::class, 'byL
 // contact
 Route::post('/contact', [ContactController::class, 'store']);
 
-// Agent Stripe webhook — must be unauthenticated (called directly by Stripe)
-// IMPORTANT: Exclude this route from CSRF in VerifyCsrfToken middleware if applicable
-Route::post('/agent/webhook', [AgentWebhookController::class, 'handleWebhook']);
+// Agent Stripe webhook and listing routes
+Route::prefix('agent')->group(function () {
+    Route::post('/webhook', [AgentWebhookController::class, 'handleWebhook']);
+    Route::post('/listing-profile', [AgentController::class, 'createAgentListingProfile']);
+    Route::post('/verify-session', [AgentController::class, 'verifySession']);
+});
 
 
 Route::group(['middleware' => 'auth:sanctum'], function ($router) {
@@ -86,12 +89,4 @@ Route::group(['middleware' => 'auth:sanctum'], function ($router) {
     Route::get('/notifications', [NotificationController::class, 'userNotifications']);
     //firebase token
     Route::post('/firebase-token', [NotificationController::class, 'storeFirebaseToken']);
-
-    // Agent listing routes
-    Route::prefix('agent')->group(function () {
-        Route::post('/create-checkout-session', [AgentController::class, 'createCheckoutSession']);
-        Route::post('/verify-session', [AgentController::class, 'verifySession']);
-        Route::get('/my-listing', [AgentController::class, 'myListing']);
-    });
-
 });

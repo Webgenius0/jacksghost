@@ -14,7 +14,6 @@ class AgentResource extends JsonResource
     {
         return [
             'id'               => $this->id,
-            'user_id'          => $this->user_id,
             'agent_name'       => $this->agent_name,
             'agency_name'      => $this->agency_name,
             'slug'             => $this->slug,
