@@ -43,6 +43,8 @@ class StoreAgentListingRequest extends FormRequest
             'address'          => ['nullable', 'string', 'max:500'],
             'phone_number'     => ['nullable', 'string', 'max:30'],
             'email'            => ['nullable', 'email', 'max:255'],
+            'website_link'     => ['nullable', 'string', 'max:255'],
+            'notable_client'   => ['nullable', 'string', 'max:255'],
 
             // Bio
             'bio'              => ['nullable', 'string'],
@@ -64,6 +66,8 @@ class StoreAgentListingRequest extends FormRequest
             'certifications.*.name' => 'certification name',
             'certifications.*.file' => 'certification file',
             'phone_number'        => 'phone number',
+            'website_link'        => 'website link',
+            'notable_client'      => 'notable client',
             'bio'                 => 'bio',
         ];
     }

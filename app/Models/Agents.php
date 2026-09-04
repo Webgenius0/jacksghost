@@ -21,8 +21,6 @@ class Agents extends Model
         'background_info',
         'notable_client',
         'status',
-        'payment_intent_id',
-        'payment_status',
     ];
 
     protected $casts = [
@@ -38,5 +36,10 @@ class Agents extends Model
     public function services()
     {
         return $this->hasMany(ServiceProvided::class, 'agent_id');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(AgentPayment::class, 'agent_id');
     }
 }

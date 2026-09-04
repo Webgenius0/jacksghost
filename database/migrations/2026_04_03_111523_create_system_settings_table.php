@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('logo')->nullable();
             $table->string('favicon')->nullable();
             $table->longText('description')->nullable();
+            $table->decimal('agent_listing_fee', 10, 2)->default(0.00);
+            $table->decimal('subscription_fee', 10, 2)->default(0.00);
             $table->timestamps();
         });
     }

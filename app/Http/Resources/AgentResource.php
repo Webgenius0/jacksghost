@@ -25,9 +25,20 @@ class AgentResource extends JsonResource
             'address'          => $this->address,
             'phone_number'     => $this->phone_number,
             'email'            => $this->email,
+            'website_link'     => $this->website_link,
+            'notable_client'   => $this->notable_client,
             'background_info'  => $this->background_info,
             'status'           => $this->status,
-            'payment_status'   => $this->payment_status,
+            'payment'          => $this->whenLoaded('payment', function () {
+                return [
+                    'payment_intent_id' => $this->payment->payment_intent_id,
+                    'stripe_session_id' => $this->payment->stripe_session_id,
+                    'payment_status'    => $this->payment->payment_status,
+                    'amount'            => $this->payment->amount,
+                    'currency'          => $this->payment->currency,
+                    'paid_at'           => $this->payment->paid_at,
+                ];
+            }),
             'services'         => $this->whenLoaded('services', function () {
                 return $this->services->map(fn($s) => [
                     'id'           => $s->id,

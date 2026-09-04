@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAgentListingRequest;
 use App\Http\Resources\AgentResource;
 use App\Models\AgentListingTemp;
+use App\Models\AgentPayment;
 use App\Models\Agents;
+use App\Models\SystemSetting;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -73,10 +75,13 @@ class AgentController extends Controller
             'address'          => $request->address,
             'phone_number'     => $request->phone_number,
             'email'            => $email,
+            'website_link'     => $request->website_link,
+            'notable_client'   => $request->notable_client,
             'bio'              => $request->bio,
         ];
 
-        $frontendUrl = rtrim(config('app.frontend_url', config('app.url')), '/');
+        $frontendUrl     = rtrim(config('app.frontend_url', config('app.url')), '/');
+        $agentListingFee = (int) (SystemSetting::first()?->agent_listing_fee ?? 100) * 100;
 
         $sessionParams = [
             'mode'         => 'payment',
@@ -84,7 +89,7 @@ class AgentController extends Controller
                 [
                     'price_data' => [
                         'currency'     => 'usd',
-                        'unit_amount'  => config('stripe.agent_listing_fee'),
+                        'unit_amount'  => $agentListingFee,
                         'product_data' => [
                             'name'        => 'Agent Profile Listing',
                             'description' => 'One-time fee to list your agent profile in the directory.',
@@ -137,14 +142,14 @@ class AgentController extends Controller
 
         // Already processed by webhook?
         if ($temp->payment_status === 'succeeded') {
-            $agent = Agents::where('payment_intent_id', $request->session_id)
+            $payment = AgentPayment::where('stripe_session_id', $request->session_id)
                 ->whereIn('payment_status', ['succeeded', 'paid'])
                 ->first();
 
-            if ($agent) {
+            if ($payment?->agent) {
                 return $this->success(
                     'Your agent listing is already active.',
-                    new AgentResource($agent->load(['services', 'certifications']))
+                    new AgentResource($payment->agent->load(['services', 'certifications']))
                 );
             }
         }
@@ -188,10 +193,25 @@ class AgentController extends Controller
             'address'           => $data['address'] ?? null,
             'phone_number'      => $data['phone_number'] ?? null,
             'email'             => $data['email'] ?? null,
+            'website_link'      => $data['website_link'] ?? null,
+            'notable_client'    => $data['notable_client'] ?? null,
             'background_info'   => $data['bio'] ?? null,
-            'status'            => 'active',
-            'payment_intent_id' => $paymentIntentId ?? $temp->stripe_session_id,
+            'status'            => 'pending',
+        ]);
+
+        // Record the payment transaction separately for admin tracking
+        AgentPayment::create([
+            'agent_id'          => $agent->id,
+            'stripe_session_id' => $temp->stripe_session_id,
+            'payment_intent_id' => $paymentIntentId,
+            'amount'            => (int) (SystemSetting::first()?->agent_listing_fee ?? 100),
+            'currency'          => 'usd',
             'payment_status'    => 'succeeded',
+            'paid_at'           => now(),
+            'metadata'          => [
+                'agent_name' => $data['agent_name'],
+                'email'      => $data['email'] ?? null,
+            ],
         ]);
 
         // Create services
@@ -215,8 +235,7 @@ class AgentController extends Controller
             }
         }
 
-        // Mark temp as processed and clean up
-        $temp->update(['payment_status' => 'succeeded']);
+        // Mark temp clean up
         $temp->delete();
 
         return $agent;

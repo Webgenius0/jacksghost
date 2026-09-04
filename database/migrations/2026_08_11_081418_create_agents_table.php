@@ -26,9 +26,7 @@ return new class extends Migration
             $table->string('website_link')->nullable();
             $table->longText('background_info')->nullable();
             $table->text('notable_client')->nullable();
-            $table->string('status')->default('active');
-            $table->string('payment_intent_id')->nullable();
-            $table->string('payment_status')->nullable()->default('pending');
+            $table->string('status')->default('pending'); // pending, approved, rejected
             $table->timestamps();
         });
     }

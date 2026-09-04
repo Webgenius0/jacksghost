@@ -24,6 +24,8 @@ class SystemSettingResource extends JsonResource
             'favicon'          => $this->favicon,
             'favicon_full_url' => $this->fullImageUrlForApi($this->favicon),
             'description'      => $this->description,
+            'agent_listing_fee' => $this->agent_listing_fee,
+            'subscription_fee' => $this->subscription_fee,
         ];
     }
 }

@@ -31,6 +31,8 @@ interface SystemSettings {
     description: string;
     logo: File | string | null;
     favicon: File | string | null;
+    agent_listing_fee: number | string;
+    subscription_fee: number | string;
 }
 
 export default function SystemSetting({ settings }: { settings: SystemSettings | null }) {
@@ -44,6 +46,8 @@ export default function SystemSetting({ settings }: { settings: SystemSettings |
         description: settings?.description || '',
         logo: settings?.logo || null,
         favicon: settings?.favicon || null,
+        agent_listing_fee: settings?.agent_listing_fee ?? '',
+        subscription_fee: settings?.subscription_fee ?? '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -152,6 +156,38 @@ export default function SystemSetting({ settings }: { settings: SystemSettings |
                                 placeholder="Brief description of the system"
                             />
                             <InputError className="mt-2" message={errors.description} />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="agent_listing_fee">Agent Listing Fee ($)</Label>
+                                <Input
+                                    id="agent_listing_fee"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="mt-1 block w-full"
+                                    value={data.agent_listing_fee}
+                                    onChange={(e) => setData('agent_listing_fee', e.target.value)}
+                                    placeholder="e.g., 25.00"
+                                />
+                                <InputError className="mt-2" message={errors.agent_listing_fee} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="subscription_fee">Subscription Fee ($)</Label>
+                                <Input
+                                    id="subscription_fee"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="mt-1 block w-full"
+                                    value={data.subscription_fee}
+                                    onChange={(e) => setData('subscription_fee', e.target.value)}
+                                    placeholder="e.g., 9.99"
+                                />
+                                <InputError className="mt-2" message={errors.subscription_fee} />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

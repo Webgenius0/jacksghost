@@ -20,6 +20,13 @@ class SystemSetting extends Model
         'logo',
         'favicon',
         'description',
+        'agent_listing_fee',
+        'subscription_fee',
+    ];
+
+    protected $casts = [
+        'agent_listing_fee' => 'decimal:2',
+        'subscription_fee'  => 'decimal:2',
     ];
 
     protected $hidden = [

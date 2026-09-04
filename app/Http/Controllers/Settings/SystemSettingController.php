@@ -40,6 +40,8 @@ class SystemSettingController extends Controller
             'number'              => 'nullable|string|max:20',
             'address'             => 'nullable|string',
             'description'         => 'nullable|string',
+            'agent_listing_fee'   => 'nullable|numeric|min:0',
+            'subscription_fee'    => 'nullable|numeric|min:0',
             // hasFile() is true ONLY when an actual binary upload is present.
             // A plain URL string (unchanged field) returns false, so it falls
             // back to 'nullable' and the rule is skipped entirely.
@@ -60,6 +62,8 @@ class SystemSettingController extends Controller
             $setting->number         = $request->number;
             $setting->address        = $request->address;
             $setting->description    = $request->description;
+            $setting->agent_listing_fee = $request->agent_listing_fee ?? 0.00;
+            $setting->subscription_fee  = $request->subscription_fee ?? 0.00;
 
             if ($request->hasFile('logo')) {
                 if ($setting->logo && Storage::disk('public')->exists($setting->logo)) {

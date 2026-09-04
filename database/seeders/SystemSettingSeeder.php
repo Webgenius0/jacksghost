@@ -23,6 +23,8 @@ class SystemSettingSeeder extends Seeder
             'address' => null,
             'copyright_text' => '© 1997 - 2026 - Sports Agent Directory - All Rights Reserved',
             'description' => 'The trusted directory connecting athletes with verified sports agents across every major league — since 1997.',
+            'agent_listing_fee' => 100,
+            'subscription_fee' => 59.95,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
