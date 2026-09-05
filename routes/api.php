@@ -66,6 +66,8 @@ Route::prefix('agent')->group(function () {
     Route::post('/webhook', [AgentWebhookController::class, 'handleWebhook']);
     Route::post('/listing-profile', [AgentController::class, 'createAgentListingProfile']);
     Route::post('/verify-session', [AgentController::class, 'verifySession']);
+    Route::get('/', [AgentController::class, 'getAllAgents']);
+    Route::get('/{slug}', [AgentController::class, 'getAgentDetail']);
 });
 
 

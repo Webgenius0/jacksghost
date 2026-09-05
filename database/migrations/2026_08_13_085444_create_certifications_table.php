@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('agent_id')->constrained()->cascadeOnDelete();
             $table->string('certificate_name');
-            $table->string('certificate_file');
+            $table->string('certificate_file')->nullable();
             $table->timestamps();
         });
     }

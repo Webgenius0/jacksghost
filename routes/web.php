@@ -2,6 +2,7 @@
 
 
 use App\Models\User;
+use App\Http\Controllers\Web\Admin\Agent\AgentController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,6 +18,11 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     //
 
+});
+
+Route::middleware('auth')->group(function () {
+    Route::resource('agents', AgentController::class);
+    Route::patch('agents/{agent}/status', [AgentController::class, 'updateStatus'])->name('agents.updateStatus');
 });
 
 Route::get('/run-migrate', function () {

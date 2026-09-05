@@ -10,6 +10,7 @@ class AgentPayment extends Model
         'agent_id',
         'stripe_session_id',
         'payment_intent_id',
+        'transaction_id',
         'amount',
         'currency',
         'payment_status',

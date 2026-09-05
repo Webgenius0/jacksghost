@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('agent_id')->nullable()->constrained('agents')->nullOnDelete();
             $table->string('stripe_session_id')->nullable()->index();
             $table->string('payment_intent_id')->nullable()->index();
+            $table->string('transaction_id')->nullable()->index();
             $table->decimal('amount', 10, 2)->default(0);
             $table->string('currency', 3)->default('usd');
             $table->string('payment_status')->default('pending');

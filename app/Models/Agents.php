@@ -26,8 +26,9 @@ class Agents extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'notable_client' => 'array',
     ];
-
+        
     public function certifications()
     {
         return $this->hasMany(Certification::class, 'agent_id');

@@ -44,10 +44,10 @@ class StoreAgentListingRequest extends FormRequest
             'phone_number'     => ['nullable', 'string', 'max:30'],
             'email'            => ['nullable', 'email', 'max:255'],
             'website_link'     => ['nullable', 'string', 'max:255'],
-            'notable_client'   => ['nullable', 'string', 'max:255'],
+            'notable_client'   => ['nullable'],
 
             // Bio
-            'bio'              => ['nullable', 'string'],
+            'background_info'  => ['nullable', 'string'],
         ];
     }
 
@@ -68,7 +68,7 @@ class StoreAgentListingRequest extends FormRequest
             'phone_number'        => 'phone number',
             'website_link'        => 'website link',
             'notable_client'      => 'notable client',
-            'bio'                 => 'bio',
+            'background_info'     => 'background info',
         ];
     }
 }

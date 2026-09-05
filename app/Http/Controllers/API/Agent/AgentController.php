@@ -11,14 +11,16 @@ use App\Models\AgentPayment;
 use App\Models\Agents;
 use App\Models\SystemSetting;
 use App\Traits\ApiResponse;
+use App\Traits\ImagePathTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Stripe\StripeClient;
 
 class AgentController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, ImagePathTrait;
 
     protected StripeClient $stripe;
 
@@ -62,6 +64,20 @@ class AgentController extends Controller
             }
         }
 
+        $notableClients = $request->notable_client;
+        if (is_string($notableClients)) {
+            $decoded = json_decode($notableClients, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $notableClients = $decoded;
+            } elseif (trim($notableClients) !== '') {
+                $notableClients = array_values(array_filter(array_map('trim', explode(',', $notableClients))));
+            } else {
+                $notableClients = null;
+            }
+        } elseif (!is_array($notableClients)) {
+            $notableClients = null;
+        }
+
         // Build form data payload to persist temporarily until payment is confirmed
         $formData = [
             'agent_name'       => $request->agent_name,
@@ -76,8 +92,8 @@ class AgentController extends Controller
             'phone_number'     => $request->phone_number,
             'email'            => $email,
             'website_link'     => $request->website_link,
-            'notable_client'   => $request->notable_client,
-            'bio'              => $request->bio,
+            'notable_client'   => $notableClients,
+            'background_info'  => $request->background_info,
         ];
 
         $frontendUrl     = rtrim(config('app.frontend_url', config('app.url')), '/');
@@ -182,6 +198,12 @@ class AgentController extends Controller
 
         $slug = Helper::makeSlug(Agents::class, $data['agent_name']);
 
+        $notableClients = $data['notable_client'] ?? null;
+        if (is_string($notableClients)) {
+            $decoded = json_decode($notableClients, true);
+            $notableClients = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$notableClients];
+        }
+
         $agent = Agents::create([
             'agent_name'        => $data['agent_name'],
             'agency_name'       => $data['agency_name'] ?? null,
@@ -194,8 +216,8 @@ class AgentController extends Controller
             'phone_number'      => $data['phone_number'] ?? null,
             'email'             => $data['email'] ?? null,
             'website_link'      => $data['website_link'] ?? null,
-            'notable_client'    => $data['notable_client'] ?? null,
-            'background_info'   => $data['bio'] ?? null,
+            'notable_client'    => $notableClients,
+            'background_info'   => $data['background_info'] ?? null,
             'status'            => 'pending',
         ]);
 
@@ -204,6 +226,7 @@ class AgentController extends Controller
             'agent_id'          => $agent->id,
             'stripe_session_id' => $temp->stripe_session_id,
             'payment_intent_id' => $paymentIntentId,
+            'transaction_id'    => 'TRX' . strtoupper(Str::random(10)),
             'amount'            => (int) (SystemSetting::first()?->agent_listing_fee ?? 100),
             'currency'          => 'usd',
             'payment_status'    => 'succeeded',
@@ -239,5 +262,34 @@ class AgentController extends Controller
         $temp->delete();
 
         return $agent;
+    }
+
+    public function getAllAgents()
+    {
+        $agents = Agents::where('status', 'approved')->paginate(12);
+
+        $formattedAgents = $agents->through(function ($agent) {
+            return [
+                'id'               => $agent->id,
+                'agent_name'       => $agent->agent_name,
+                'agency_name'      => $agent->agency_name,
+                'slug'             => $agent->slug,
+                'agent_photo_url'  => $agent->agent_photo ? $this->fullImageUrlForApi($agent->agent_photo) : null,
+                'address'          => $agent->address,
+                'phone_number'     => $agent->phone_number,
+                'website_link'     => $agent->website_link,
+            ];
+        });
+
+        return $this->success('All agents fetched successfully.', $formattedAgents);
+    }
+
+    public function getAgentDetail($slug)
+    {
+        $agent = Agents::where('slug', $slug)->where('status', 'approved')->first();
+        if (!$agent) {
+            return $this->error('Agent not found.', 404);
+        }
+        return $this->success('Agent fetched successfully.', new AgentResource($agent));
     }
 }

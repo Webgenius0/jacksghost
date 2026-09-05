@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('website_link')->nullable();
             $table->longText('background_info')->nullable();
-            $table->text('notable_client')->nullable();
+            $table->json('notable_client')->nullable();
             $table->string('status')->default('pending'); // pending, approved, rejected
             $table->timestamps();
         });
