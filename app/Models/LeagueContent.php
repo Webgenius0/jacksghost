@@ -21,7 +21,7 @@ class LeagueContent extends Model
 
     public function league()
     {
-        return $this->belongsTo(League::class);
+        return $this->belongsTo(League::class, 'league_id', 'id');
     }
 
     public function getImageAttribute($value)

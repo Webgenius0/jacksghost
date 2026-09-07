@@ -21,8 +21,9 @@ class League extends Model
         'updated_at' => 'datetime',
         'is_draft_pick' => 'boolean',
     ];
+
     public function leagueContent()
     {
-        return $this->hasOne(LeagueContent::class);
+        return $this->hasOne(LeagueContent::class, 'league_id', 'id');
     }
 }

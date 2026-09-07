@@ -50,13 +50,13 @@ Route::get('/social-links', [SystemSettingController::class, 'socialLinks']);
 Route::get('/faq', [FaqController::class, 'index']);
 
 // leagues
-Route::get('/leagues', [LeagueController::class, 'index']);
-Route::get('/leagues/{league}', [LeagueController::class, 'show']);
+Route::get('/agent/leagues', [LeagueController::class, 'agentLeagues']);
+Route::get('/draft/leagues', [LeagueController::class, 'draftLeagues']);
+Route::get('/draft-picks/{slug}', [LeagueController::class, 'draftYear']);
 
 // league contents
-Route::get('/league-contents', [LeagueContentController::class, 'index']);
-Route::get('/league-contents/{leagueContent}', [LeagueContentController::class, 'show']);
-Route::get('/leagues/{leagueId}/contents', [LeagueContentController::class, 'byLeague']);
+Route::get('/sports-agents/{slug}/', [LeagueController::class, 'show']);
+Route::get('/draft-picks/{slug}/{year}', [LeagueController::class, 'draftPlayers']);
 
 // contact
 Route::post('/contact', [ContactController::class, 'store']);

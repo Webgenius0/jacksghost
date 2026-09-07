@@ -11,10 +11,10 @@ class LeagueContentResource extends JsonResource
     {
         return [
             'id'            => $this->id,
-            'league_id'     => $this->league_id,
-            'league'        => new LeagueResource($this->whenLoaded('league')),
-            'agent_content' => $this->agent_content,
-            'image'         => $this->image, // model accessor already returns full URL
+            'slug'          => $this->league_slug,
+            'name'          => $this->league_name,
+            'image'         => $this->leagueContent?->image,
+            'content'       => $this->leagueContent?->agent_content,
         ];
     }
 }

@@ -3,27 +3,65 @@
 namespace App\Http\Controllers\API\League;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\LeagueContentResource;
 use App\Http\Resources\LeagueResource;
+use App\Models\DraftPlayer;
 use App\Models\League;
+use App\Models\Year;
 use App\Traits\ApiResponse;
 
 class LeagueController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function agentLeagues()
     {
-        $leagues = League::with('leagueContent')->get();
+        $leagues = League::get();
 
         $leagues = LeagueResource::collection($leagues);
 
-        return $this->success('Leagues retrieved successfully!', $leagues, 200);
+        return $this->success('Agent leagues retrieved successfully!', $leagues, 200);
     }
 
-    public function show(League $league)
+    public function show($slug)
     {
+        $league = League::where('league_slug', $slug)->first();
         $league->load('leagueContent');
 
-        return $this->success('League retrieved successfully!', new LeagueResource($league), 200);
+        return $this->success('League content retrieved successfully!', new LeagueContentResource($league), 200);
+    }
+
+    public function draftLeagues()
+    {
+        $leagues = League::where('is_draft_pick', true)->with('leagueContent')->get();
+
+        $leagues = LeagueResource::collection($leagues);
+
+        return $this->success('Draft leagues retrieved successfully!', $leagues, 200);
+    }
+
+    public function draftYear($slug)
+    {
+        $league = League::where('league_slug', $slug)->where('is_draft_pick', true)->first();
+        
+        if (!$league) {
+            return $this->error('Draft picks league not found', 404);
+        }
+        $years = Year::orderBy('year', 'desc')->get();
+
+        return $this->success('Draft years retrieved successfully!', $years, 200);
+    }
+
+    public function draftPlayers($slug, $year)
+    {
+        $league = League::where('league_slug', $slug)->where('is_draft_pick', true)->first();
+        
+        if (!$league) {
+            return $this->error('Draft picks league not found', 404);
+        }
+        
+        $players = DraftPlayer::where('league_id', $league->id)->where('year', $year)->get();
+
+        return $this->success('Draft players retrieved successfully!', $players, 200);    
     }
 }
