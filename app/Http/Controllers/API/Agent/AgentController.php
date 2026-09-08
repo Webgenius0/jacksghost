@@ -264,9 +264,22 @@ class AgentController extends Controller
         return $agent;
     }
 
-    public function getAllAgents()
+    public function getAllAgents(Request $request)
     {
-        $agents = Agents::where('status', 'approved')->paginate(12);
+        $query = Agents::where('status', 'approved');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('institution_name', 'like', "%{$search}%");
+            });
+        }
+
+        $agents = $query->paginate(12);
 
         $formattedAgents = $agents->through(function ($agent) {
             return [
@@ -274,14 +287,19 @@ class AgentController extends Controller
                 'agent_name'       => $agent->agent_name,
                 'agency_name'      => $agent->agency_name,
                 'slug'             => $agent->slug,
-                'agent_photo_url'  => $agent->agent_photo ? $this->fullImageUrlForApi($agent->agent_photo) : null,
+                'agent_photo_url'  => $agent->agent_photo
+                    ? $this->fullImageUrlForApi($agent->agent_photo)
+                    : null,
                 'address'          => $agent->address,
                 'phone_number'     => $agent->phone_number,
                 'website_link'     => $agent->website_link,
             ];
         });
 
-        return $this->success('All agents fetched successfully.', $formattedAgents);
+        return $this->success(
+            'All agents fetched successfully.',
+            $formattedAgents
+        );
     }
 
     public function getAgentDetail($slug)

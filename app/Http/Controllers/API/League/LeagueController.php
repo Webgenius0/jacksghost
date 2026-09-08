@@ -9,6 +9,7 @@ use App\Models\DraftPlayer;
 use App\Models\League;
 use App\Models\Year;
 use App\Traits\ApiResponse;
+use Illuminate\Http\Request;
 
 class LeagueController extends Controller
 {
@@ -52,16 +53,39 @@ class LeagueController extends Controller
         return $this->success('Draft years retrieved successfully!', $years, 200);
     }
 
-    public function draftPlayers($slug, $year)
+    public function draftPlayers(Request $request, $slug, $year)
     {
-        $league = League::where('league_slug', $slug)->where('is_draft_pick', true)->first();
-        
+        $league = League::where('league_slug', $slug)
+            ->where('is_draft_pick', true)
+            ->first();
+
         if (!$league) {
             return $this->error('Draft picks league not found', 404);
         }
-        
-        $players = DraftPlayer::where('league_id', $league->id)->where('year', $year)->get();
 
-        return $this->success('Draft players retrieved successfully!', $players, 200);    
+        $query = DraftPlayer::where('league_id', $league->id)
+            ->where('year', $year);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('player_name', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('school', 'like', "%{$search}%")
+                    ->orWhere('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('round', 'like', "%{$search}%")
+                    ->orWhere('pick', 'like', "%{$search}%");
+            });
+        }
+
+        $players = $query->get();
+
+        return $this->success(
+            'Draft players retrieved successfully!',
+            $players,
+            200
+        );
     }
 }
