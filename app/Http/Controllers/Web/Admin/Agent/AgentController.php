@@ -10,6 +10,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class AgentController extends Controller
 {
@@ -288,5 +293,422 @@ class AgentController extends Controller
         $agent->delete();
 
         return redirect()->route('agents.index')->with('success', 'Agent deleted successfully!');
+    }
+
+    /**
+     * Export agents to Excel (.xlsx).
+     */
+    public function export(Request $request)
+    {
+        $query = Agents::with(['services']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('agent_name', 'like', "%{$search}%")
+                  ->orWhere('agency_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $agents = $query->latest()->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Agents');
+
+        $headers = [
+            'Agent Name',
+            'Agency Name',
+            'Email',
+            'Phone Number',
+            'Address',
+            'Website',
+            'Institution',
+            'Degree',
+            'Graduation Year',
+            'Notable Clients',
+            'Services',
+            'Background Info',
+            'Status',
+        ];
+
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+
+        foreach ($headers as $index => $header) {
+            $sheet->setCellValue("{$columns[$index]}1", $header);
+        }
+
+        $sheet->getStyle('A1:M1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1E293B'], // Slate 800
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical'   => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(30);
+
+        $rowIndex = 2;
+        foreach ($agents as $agent) {
+            $notableClients = is_array($agent->notable_client)
+                ? implode(', ', $agent->notable_client)
+                : ($agent->notable_client ?? '');
+
+            $services = $agent->services->pluck('service_name')->filter()->implode(', ');
+
+            $sheet->setCellValue("A{$rowIndex}", $agent->agent_name ?? '');
+            $sheet->setCellValue("B{$rowIndex}", $agent->agency_name ?? '');
+            $sheet->setCellValue("C{$rowIndex}", $agent->email ?? '');
+            $sheet->setCellValue("D{$rowIndex}", $agent->phone_number ?? '');
+            $sheet->setCellValue("E{$rowIndex}", $agent->address ?? '');
+            $sheet->setCellValue("F{$rowIndex}", $agent->website_link ?? '');
+            $sheet->setCellValue("G{$rowIndex}", $agent->institution_name ?? '');
+            $sheet->setCellValue("H{$rowIndex}", $agent->degree ?? '');
+            $sheet->setCellValue("I{$rowIndex}", $agent->graduation_year ?? '');
+            $sheet->setCellValue("J{$rowIndex}", $notableClients);
+            $sheet->setCellValue("K{$rowIndex}", $services);
+            $sheet->setCellValue("L{$rowIndex}", $agent->background_info ?? '');
+            $sheet->setCellValue("M{$rowIndex}", $agent->status ?? 'pending');
+
+            if ($rowIndex % 2 === 0) {
+                $sheet->getStyle("A{$rowIndex}:M{$rowIndex}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC'],
+                    ],
+                ]);
+            }
+            $sheet->getRowDimension($rowIndex)->setRowHeight(22);
+            $rowIndex++;
+        }
+
+        foreach ($columns as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'agents_' . now()->format('Y_m_d_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Download sample Excel template for importing agents.
+     */
+    public function template()
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Agents Template');
+
+        $headers = [
+            'Agent Name',
+            'Agency Name',
+            'Email',
+            'Phone Number',
+            'Address',
+            'Website',
+            'Institution',
+            'Degree',
+            'Graduation Year',
+            'Notable Clients',
+            'Services',
+            'Background Info',
+            'Status',
+        ];
+
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+
+        foreach ($headers as $index => $header) {
+            $sheet->setCellValue("{$columns[$index]}1", $header);
+        }
+
+        $sheet->getStyle('A1:M1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F46E5'], // Indigo 600
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical'   => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(30);
+
+        $sampleData = [
+            [
+                'Scott Boras',
+                'Boras Corporation',
+                'sboras@borascorp.example',
+                '+1 949-555-0100',
+                'Newport Beach, California, USA',
+                'https://borascorp.com',
+                'University of the Pacific',
+                'Pharm.D. & J.D.',
+                '1982',
+                'Bryce Harper, Gerrit Cole, Corey Seager',
+                'Contract Negotiation, Brand Endorsement, Arbitration',
+                'Premier baseball agent representing top tier MLB athletes worldwide.',
+                'approved',
+            ],
+            [
+                'Rich Paul',
+                'Klutch Sports Group',
+                'rpaul@klutchsports.example',
+                '+1 310-555-0155',
+                'Los Angeles, California, USA',
+                'https://klutchsports.com',
+                'Cleveland State University',
+                'Business Administration',
+                '2003',
+                'LeBron James, Anthony Davis, Draymond Green',
+                'Player Representation, Marketing, Media Production',
+                'Founder of Klutch Sports Group and leading sports executive.',
+                'approved',
+            ],
+        ];
+
+        $rowIndex = 2;
+        foreach ($sampleData as $row) {
+            foreach ($row as $colIdx => $val) {
+                $sheet->setCellValue("{$columns[$colIdx]}{$rowIndex}", $val);
+            }
+            $sheet->getRowDimension($rowIndex)->setRowHeight(22);
+            $rowIndex++;
+        }
+
+        foreach ($columns as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'agents_import_template.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Import agents from an Excel / CSV file.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file'            => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+            'default_status'  => ['nullable', 'in:pending,approved,rejected'],
+            'update_existing' => ['nullable'],
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rawRows = $sheet->toArray(null, true, false, false);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Failed to read file: ' . $e->getMessage());
+        }
+
+        if (empty($rawRows) || count($rawRows) < 2) {
+            return redirect()->back()->with('error', 'The uploaded file is empty or missing data rows.');
+        }
+
+        $headerRow = array_shift($rawRows);
+        $headerMap = [];
+
+        foreach ($headerRow as $colIdx => $headerVal) {
+            if ($headerVal === null || $headerVal === '') {
+                continue;
+            }
+            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string)$headerVal)));
+
+            if (in_array($normalized, ['agentname', 'name', 'agent', 'fullname', 'playeragent'])) {
+                $headerMap[$colIdx] = 'agent_name';
+            } elseif (in_array($normalized, ['agencyname', 'agency', 'company', 'firm'])) {
+                $headerMap[$colIdx] = 'agency_name';
+            } elseif (in_array($normalized, ['email', 'emailaddress', 'mail'])) {
+                $headerMap[$colIdx] = 'email';
+            } elseif (in_array($normalized, ['phonenumber', 'phone', 'mobile', 'tel', 'cellphone'])) {
+                $headerMap[$colIdx] = 'phone_number';
+            } elseif (in_array($normalized, ['address', 'location', 'city', 'officeaddress'])) {
+                $headerMap[$colIdx] = 'address';
+            } elseif (in_array($normalized, ['websitelink', 'website', 'url', 'web', 'site'])) {
+                $headerMap[$colIdx] = 'website_link';
+            } elseif (in_array($normalized, ['institutionname', 'institution', 'university', 'college', 'school'])) {
+                $headerMap[$colIdx] = 'institution_name';
+            } elseif (in_array($normalized, ['degree', 'qualification', 'education'])) {
+                $headerMap[$colIdx] = 'degree';
+            } elseif (in_array($normalized, ['graduationyear', 'gradyear', 'yeargraduated'])) {
+                $headerMap[$colIdx] = 'graduation_year';
+            } elseif (in_array($normalized, ['notableclients', 'notableclient', 'clients', 'notableplayer', 'players'])) {
+                $headerMap[$colIdx] = 'notable_client';
+            } elseif (in_array($normalized, ['services', 'servicesprovided', 'service'])) {
+                $headerMap[$colIdx] = 'services';
+            } elseif (in_array($normalized, ['backgroundinfo', 'background', 'bio', 'description', 'info', 'about'])) {
+                $headerMap[$colIdx] = 'background_info';
+            } elseif (in_array($normalized, ['status', 'agentstatus'])) {
+                $headerMap[$colIdx] = 'status';
+            }
+        }
+
+        if (!in_array('agent_name', $headerMap)) {
+            return redirect()->back()->with('error', 'Could not find an "Agent Name" column in the uploaded file header.');
+        }
+
+        $updateExisting = filter_var($request->input('update_existing', true), FILTER_VALIDATE_BOOLEAN);
+        $defaultStatus = $request->input('default_status', 'pending');
+
+        $createdCount = 0;
+        $updatedCount = 0;
+        $skippedCount = 0;
+        $errors = [];
+
+        foreach ($rawRows as $rowIdx => $row) {
+            $rowNum = $rowIdx + 2;
+
+            $hasData = false;
+            foreach ($row as $cell) {
+                if ($cell !== null && trim((string)$cell) !== '') {
+                    $hasData = true;
+                    break;
+                }
+            }
+            if (!$hasData) {
+                continue;
+            }
+
+            $rowData = [];
+            foreach ($headerMap as $colIdx => $key) {
+                $rowData[$key] = isset($row[$colIdx]) ? trim((string)$row[$colIdx]) : null;
+            }
+
+            $agentName = $rowData['agent_name'] ?? null;
+            if (empty($agentName)) {
+                $errors[] = "Row {$rowNum}: Agent name is missing.";
+                $skippedCount++;
+                continue;
+            }
+
+            // Parse notable clients (comma separated)
+            $notableClients = null;
+            if (!empty($rowData['notable_client'])) {
+                $parts = array_values(array_filter(array_map('trim', explode(',', $rowData['notable_client']))));
+                if (!empty($parts)) {
+                    $notableClients = $parts;
+                }
+            }
+
+            // Parse status
+            $status = $defaultStatus;
+            if (!empty($rowData['status'])) {
+                $rawStatus = strtolower(trim($rowData['status']));
+                if (in_array($rawStatus, ['approved', 'pending', 'rejected'])) {
+                    $status = $rawStatus;
+                } elseif (in_array($rawStatus, ['active', 'verified'])) {
+                    $status = 'approved';
+                }
+            }
+
+            $email = !empty($rowData['email']) ? $rowData['email'] : null;
+
+            try {
+                // Find existing agent by email or agent_name
+                $existing = null;
+                if ($email) {
+                    $existing = Agents::where('email', $email)->first();
+                }
+                if (!$existing) {
+                    $existing = Agents::where('agent_name', $agentName)->first();
+                }
+
+                if ($existing) {
+                    if ($updateExisting) {
+                        $existing->update([
+                            'agency_name'      => $rowData['agency_name'] ?: $existing->agency_name,
+                            'email'            => $email ?: $existing->email,
+                            'phone_number'     => $rowData['phone_number'] ?: $existing->phone_number,
+                            'address'          => $rowData['address'] ?: $existing->address,
+                            'website_link'     => $rowData['website_link'] ?: $existing->website_link,
+                            'institution_name' => $rowData['institution_name'] ?: $existing->institution_name,
+                            'degree'           => $rowData['degree'] ?: $existing->degree,
+                            'graduation_year'  => $rowData['graduation_year'] ?: $existing->graduation_year,
+                            'background_info'  => $rowData['background_info'] ?: $existing->background_info,
+                            'notable_client'   => $notableClients ?: $existing->notable_client,
+                            'status'           => $status ?: $existing->status,
+                        ]);
+                        $agentRecord = $existing;
+                        $updatedCount++;
+                    } else {
+                        $skippedCount++;
+                        continue;
+                    }
+                } else {
+                    $slug = Helper::makeSlug(Agents::class, $agentName);
+                    $agentRecord = Agents::create([
+                        'agent_name'       => $agentName,
+                        'slug'             => $slug,
+                        'agency_name'      => $rowData['agency_name'] ?? null,
+                        'email'            => $email,
+                        'phone_number'     => $rowData['phone_number'] ?? null,
+                        'address'          => $rowData['address'] ?? null,
+                        'website_link'     => $rowData['website_link'] ?? null,
+                        'institution_name' => $rowData['institution_name'] ?? null,
+                        'degree'           => $rowData['degree'] ?? null,
+                        'graduation_year'  => $rowData['graduation_year'] ?? null,
+                        'background_info'  => $rowData['background_info'] ?? null,
+                        'notable_client'   => $notableClients,
+                        'status'           => $status,
+                    ]);
+                    $createdCount++;
+                }
+
+                // Sync services if provided
+                if (!empty($rowData['services']) && $agentRecord) {
+                    $servicesList = array_filter(array_map('trim', explode(',', $rowData['services'])));
+                    foreach ($servicesList as $sName) {
+                        if (!empty($sName)) {
+                            $agentRecord->services()->firstOrCreate(['service_name' => $sName]);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                $errors[] = "Row {$rowNum} ({$agentName}): " . $e->getMessage();
+                $skippedCount++;
+            }
+        }
+
+        $message = "Import complete! Added {$createdCount} new agent(s), updated {$updatedCount} agent(s).";
+        if ($skippedCount > 0 && empty($errors)) {
+            $message .= " Skipped {$skippedCount} existing agent(s).";
+        }
+
+        return redirect()->back()
+            ->with('success', $message)
+            ->with('import_errors', !empty($errors) ? array_slice($errors, 0, 20) : null);
     }
 }

@@ -35,6 +35,9 @@ Route::resource('/contact', ContactController::class);
 
 Route::resource('/league', LeagueController::class);
 Route::resource('/league-content', \App\Http\Controllers\Web\Admin\League\LeagueContentController::class);
+Route::get('/draft-player/export', [DraftPlayerController::class, 'export'])->name('draft-player.export');
+Route::get('/draft-player/template', [DraftPlayerController::class, 'template'])->name('draft-player.template');
+Route::post('/draft-player/import', [DraftPlayerController::class, 'import'])->name('draft-player.import');
 Route::resource('/draft-player', DraftPlayerController::class);
 Route::resource('/year', YearController::class);
 

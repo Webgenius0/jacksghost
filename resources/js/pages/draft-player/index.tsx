@@ -1,18 +1,37 @@
 import AppLayout from '@/layouts/app-layout';
 import { PaginatedDraftPlayers, DraftPlayer, League, Year } from '@/types';
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import Table from '@/components/Table';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Edit, Trash, Plus, UserCheck } from 'lucide-react';
+import {
+    Edit,
+    Trash,
+    Plus,
+    UserCheck,
+    Upload,
+    Download,
+    FileSpreadsheet,
+    ChevronDown,
+    AlertTriangle,
+    X,
+} from 'lucide-react';
 import { AlertDialog } from '@heroui/react';
 import { ConfirmDialog } from '@/components/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     Card,
     CardContent,
     CardHeader,
 } from '@/components/ui/card';
 import { useState } from 'react';
+import ImportDraftPlayerModal from './import-modal';
 
 type DraftPlayerRow = DraftPlayer & { actions?: unknown };
 
@@ -51,6 +70,10 @@ export default function Index({ draftPlayers, leagues, years }: Props) {
 
     const [leagueFilter, setLeagueFilter] = useState(queryParams.get('league_id') || '');
     const [yearFilter, setYearFilter]     = useState(queryParams.get('year') || '');
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [dismissErrors, setDismissErrors] = useState(false);
+
+    const { flash } = usePage<{ flash?: { success?: string; error?: string; import_errors?: string[] } }>().props;
 
     const applyFilter = (newLeague: string, newYear: string) => {
         const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
@@ -58,6 +81,20 @@ export default function Index({ draftPlayers, leagues, years }: Props) {
         if (newYear)   params.year      = newYear;   else delete params.year;
         params.page = '1';
         router.get(window.location.pathname, params, { preserveState: true, replace: true });
+    };
+
+    const handleExportFiltered = () => {
+        const params = new URLSearchParams();
+        if (leagueFilter) params.append('league_id', leagueFilter);
+        if (yearFilter) params.append('year', yearFilter);
+        if (search) params.append('search', search);
+
+        const qs = params.toString();
+        window.location.href = route('draft-player.export') + (qs ? `?${qs}` : '');
+    };
+
+    const handleExportAll = () => {
+        window.location.href = route('draft-player.export');
     };
 
     const deletePlayer = (id: number) => {
@@ -86,14 +123,93 @@ export default function Index({ draftPlayers, leagues, years }: Props) {
                                     Drafted Players
                                 </h1>
                             </div>
-                            <Link
-                                href={route('draft-player.create')}
-                                className={buttonVariants({ variant: 'default' })}
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Player
-                            </Link>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {/* Export Dropdown */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="gap-2">
+                                            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                            <span>Export</span>
+                                            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuItem
+                                            onClick={handleExportFiltered}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <Download className="w-4 h-4 text-emerald-600" />
+                                            <span>Export Filtered ({draftPlayers.total})</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={handleExportAll}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <Download className="w-4 h-4 text-blue-600" />
+                                            <span>Export All Players</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => (window.location.href = route('draft-player.template'))}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <FileSpreadsheet className="w-4 h-4 text-primary" />
+                                            <span>Download Template (.xlsx)</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                {/* Import Button */}
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <Upload className="w-4 h-4 text-primary" />
+                                    <span>Import Excel</span>
+                                </Button>
+
+                                {/* Add Player Link */}
+                                <Link
+                                    href={route('draft-player.create')}
+                                    className={buttonVariants({ variant: 'default' })}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Player
+                                </Link>
+                            </div>
                         </div>
+
+                        {/* Import Warnings Alert */}
+                        {flash?.import_errors && flash.import_errors.length > 0 && !dismissErrors && (
+                            <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-2.5">
+                                        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="text-sm font-semibold">
+                                                Import Notices ({flash.import_errors.length} issue{flash.import_errors.length > 1 ? 's' : ''})
+                                            </h3>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                                                Some rows had issues or were skipped during import:
+                                            </p>
+                                            <ul className="mt-2 space-y-1 text-xs list-disc list-inside max-h-40 overflow-y-auto">
+                                                {flash.import_errors.map((err, idx) => (
+                                                    <li key={idx} className="font-mono text-[11px]">{err}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDismissErrors(true)}
+                                        className="text-amber-600 hover:text-amber-900 dark:hover:text-amber-100 p-1"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Filters */}
                         <div className="flex flex-wrap gap-3 mt-4">
@@ -232,6 +348,12 @@ export default function Index({ draftPlayers, leagues, years }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ImportDraftPlayerModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                leagues={leagues}
+            />
         </AppLayout>
     );
 }

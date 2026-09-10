@@ -1,10 +1,24 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Table from '@/components/Table';
-import { Trash, Edit, Eye, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+import {
+    Trash,
+    Edit,
+    Eye,
+    CheckCircle,
+    XCircle,
+    Clock,
+    Plus,
+    Upload,
+    Download,
+    FileSpreadsheet,
+    ChevronDown,
+    AlertTriangle,
+    X,
+} from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { ConfirmDialog } from '@/components/alert-dialog';
 import { AlertDialog } from '@heroui/react';
@@ -15,7 +29,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import ImportAgentModal from './import-modal';
 
 interface AgentPayment {
     amount: number;
@@ -74,6 +96,27 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; cla
 export default function Index({ agents, filters }: Props) {
     const queryParams = new URLSearchParams(window.location.search);
     const search = queryParams.get('search') || '';
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [dismissErrors, setDismissErrors] = useState(false);
+
+    const { flash } = usePage<{ flash?: { success?: string; error?: string; import_errors?: string[] } }>().props;
+
+    const handleExportFiltered = () => {
+        const params = new URLSearchParams();
+        if (filters.status && filters.status !== 'all') {
+            params.append('status', filters.status);
+        }
+        if (search) {
+            params.append('search', search);
+        }
+
+        const qs = params.toString();
+        window.location.href = route('agents.export') + (qs ? `?${qs}` : '');
+    };
+
+    const handleExportAll = () => {
+        window.location.href = route('agents.export');
+    };
 
     const deleteAgent = (id: number) => {
         router.delete(route('agents.destroy', id), {
@@ -119,7 +162,7 @@ export default function Index({ agents, filters }: Props) {
                             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Agent Management</h1>
 
                             {/* Actions & Filters */}
-                            <div className="flex items-center gap-3 ml-auto">
+                            <div className="flex items-center gap-2.5 ml-auto flex-wrap">
                                 <Select
                                     value={filters.status || 'all'}
                                     onValueChange={(val) => {
@@ -132,7 +175,7 @@ export default function Index({ agents, filters }: Props) {
                                         router.get(window.location.pathname, { ...params, page: 1 }, { preserveState: true, replace: true });
                                     }}
                                 >
-                                    <SelectTrigger className="w-[150px]">
+                                    <SelectTrigger className="w-[140px]">
                                         <SelectValue placeholder="Filter status" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -143,6 +186,51 @@ export default function Index({ agents, filters }: Props) {
                                     </SelectContent>
                                 </Select>
 
+                                {/* Export Dropdown */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="gap-2">
+                                            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                            <span>Export</span>
+                                            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuItem
+                                            onClick={handleExportFiltered}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <Download className="w-4 h-4 text-emerald-600" />
+                                            <span>Export Current ({agents.total})</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={handleExportAll}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <Download className="w-4 h-4 text-blue-600" />
+                                            <span>Export All Agents</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => (window.location.href = route('agents.template'))}
+                                            className="cursor-pointer gap-2"
+                                        >
+                                            <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
+                                            <span>Download Template (.xlsx)</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                {/* Import Button */}
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                    <span>Import Excel</span>
+                                </Button>
+
                                 <Link
                                     href={route('agents.create')}
                                     className={buttonVariants({ variant: 'default', className: 'gap-2 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm' })}
@@ -152,6 +240,37 @@ export default function Index({ agents, filters }: Props) {
                                 </Link>
                             </div>
                         </div>
+
+                        {/* Import Warnings Alert */}
+                        {flash?.import_errors && flash.import_errors.length > 0 && !dismissErrors && (
+                            <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-2.5">
+                                        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="text-sm font-semibold">
+                                                Import Notices ({flash.import_errors.length} issue{flash.import_errors.length > 1 ? 's' : ''})
+                                            </h3>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                                                Some rows had issues or were skipped during import:
+                                            </p>
+                                            <ul className="mt-2 space-y-1 text-xs list-disc list-inside max-h-40 overflow-y-auto">
+                                                {flash.import_errors.map((err, idx) => (
+                                                    <li key={idx} className="font-mono text-[11px]">{err}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDismissErrors(true)}
+                                        className="text-amber-600 hover:text-amber-900 dark:hover:text-amber-100 p-1"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </CardHeader>
 
                     <CardContent>
@@ -299,6 +418,12 @@ export default function Index({ agents, filters }: Props) {
                     </AlertDialog.Trigger>
                 }
                 onOpenChange={(isOpen) => { if (!isOpen) cancelStatusChange(); }}
+            />
+
+            {/* Import Agent Modal */}
+            <ImportAgentModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
             />
         </AppLayout>
     );
