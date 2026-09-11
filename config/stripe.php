@@ -28,6 +28,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Subscription Webhook Secret
+    |--------------------------------------------------------------------------
+    |
+    | Signing secret for the subscription-specific webhook endpoint.
+    | Create a separate webhook endpoint in Stripe dashboard pointing to
+    | /api/subscription/webhook and paste its signing secret here.
+    |
+    | Events to listen for:
+    |   - checkout.session.completed
+    |   - customer.subscription.updated
+    |   - customer.subscription.deleted
+    |   - invoice.payment_failed
+    |
+    */
+
+    'subscription_webhook_secret' => env('STRIPE_SUBSCRIPTION_WEBHOOK_SECRET', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Agent Listing Fee
     |--------------------------------------------------------------------------
     |

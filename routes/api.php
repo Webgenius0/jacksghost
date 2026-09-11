@@ -14,6 +14,8 @@ use App\Http\Controllers\API\Track\TrackController;
 use App\Http\Controllers\API\User\UserController;
 use App\Http\Controllers\API\SystemSetting\SystemSettingController;
 use App\Http\Controllers\API\Contact\ContactController;
+use App\Http\Controllers\API\Subscription\SubscriptionController;
+use App\Http\Controllers\API\Subscription\SubscriptionWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,12 @@ Route::get('/draft-picks/{slug}/{year}', [LeagueController::class, 'draftPlayers
 // contact
 Route::post('/contact', [ContactController::class, 'store']);
 
+// Subscription routes
+Route::prefix('subscription')->group(function () {
+    // Public: Stripe calls this directly (must not be behind auth)
+    Route::post('/webhook', [SubscriptionWebhookController::class, 'handleWebhook']);
+});
+
 // Agent Stripe webhook and listing routes
 Route::prefix('agent')->group(function () {
     Route::post('/webhook', [AgentWebhookController::class, 'handleWebhook']);
@@ -74,6 +82,14 @@ Route::prefix('agent')->group(function () {
 Route::group(['middleware' => 'auth:sanctum'], function ($router) {
     // common routes
     Route::post('/logout', [LoginController::class, 'logout']);
+
+    // subscription routes (authenticated)
+    Route::prefix('subscription')->group(function () {
+        Route::post('/checkout',       [SubscriptionController::class, 'createCheckoutSession']);
+        Route::post('/verify-session', [SubscriptionController::class, 'verifySession']);
+        Route::get('/status',          [SubscriptionController::class, 'getStatus']);
+        Route::post('/cancel',         [SubscriptionController::class, 'cancel']);
+    });
 
     // profile update routes
     Route::get('/user/profile', [UserController::class, 'userProfile']);

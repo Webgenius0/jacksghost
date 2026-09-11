@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\Subscription;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,7 @@ class UserController extends Controller
     public function userProfile()
     {
         $user = User::where('id', auth()->user()->id)->first();
+        $user->is_subscribed = $this->getStatus();
 
         return $this->success('Profile info retrieve successfully', new UserResource($user), 200);
     }
@@ -74,5 +76,38 @@ class UserController extends Controller
         $user->delete();
 
         return $this->success('Account deleted successfully', [], 200);
+    }
+
+
+    public function getStatus(): bool
+    {
+        $user = Auth::user();
+
+        $subscription = Subscription::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        if (!$subscription) {
+            return false;
+        }
+
+        if (
+            $subscription->subscription_status === 'active' &&
+            $subscription->subscription_expire_date &&
+            $subscription->subscription_expire_date->isPast()
+        ) {
+            $subscription->update([
+                'subscription_status' => 'expired',
+            ]);
+
+            $subscription->refresh();
+        }
+
+        $isActive = $subscription->subscription_status === 'active'
+            && $subscription->subscription_expire_date
+            && $subscription->subscription_expire_date->isFuture();
+
+
+        return $isActive;
     }
 }
