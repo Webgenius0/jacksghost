@@ -268,16 +268,16 @@ class AgentController extends Controller
     {
         $query = Agents::where('status', 'approved');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        // if ($request->filled('search')) {
+        //     $search = $request->search;
 
-            $query->where(function ($q) use ($search) {
-                $q->where('agent_name', 'like', "%{$search}%")
-                    ->orWhere('agency_name', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%")
-                    ->orWhere('institution_name', 'like', "%{$search}%");
-            });
-        }
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('agent_name', 'like', "%{$search}%")
+        //             ->orWhere('agency_name', 'like', "%{$search}%")
+        //             ->orWhere('address', 'like', "%{$search}%")
+        //             ->orWhere('institution_name', 'like', "%{$search}%");
+        //     });
+        // }
 
         $agents = $query->paginate(12);
 
@@ -290,9 +290,9 @@ class AgentController extends Controller
                 'agent_photo_url'  => $agent->agent_photo
                     ? $this->fullImageUrlForApi($agent->agent_photo)
                     : null,
-                'address'          => $agent->address,
-                'phone_number'     => $agent->phone_number,
-                'website_link'     => $agent->website_link,
+                // 'address'          => $agent->address,
+                // 'phone_number'     => $agent->phone_number,
+                // 'website_link'     => $agent->website_link,
             ];
         });
 

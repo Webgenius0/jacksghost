@@ -9,6 +9,8 @@ use App\Http\Controllers\Web\Admin\Notification\NotificationController;
 use App\Http\Controllers\Web\Admin\League\LeagueController;
 use App\Http\Controllers\Web\Admin\League\DraftPlayerController;
 use App\Http\Controllers\Web\Admin\Year\YearController;
+use App\Http\Controllers\Web\Admin\Payment\AgentPaymentController;
+use App\Http\Controllers\Web\Admin\Payment\SubscriptionController as AdminSubscriptionController;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -41,3 +43,6 @@ Route::post('/draft-player/import', [DraftPlayerController::class, 'import'])->n
 Route::resource('/draft-player', DraftPlayerController::class);
 Route::resource('/year', YearController::class);
 
+// Payment transaction tracking
+Route::get('/payments/agent-payments', [AgentPaymentController::class, 'index'])->name('agent-payments.index');
+Route::get('/payments/subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
