@@ -74,7 +74,7 @@ Route::prefix('agent')->group(function () {
     Route::post('/webhook', [AgentWebhookController::class, 'handleWebhook']);
     Route::post('/listing-profile', [AgentController::class, 'createAgentListingProfile']);
     Route::post('/verify-session', [AgentController::class, 'verifySession']);
-    Route::get('/', [AgentController::class, 'getAllAgents']);
+    Route::get('/', [AgentController::class, 'getListingAgents']);
     Route::get('/{slug}', [AgentController::class, 'getAgentDetail']);
 });
 
@@ -96,6 +96,9 @@ Route::group(['middleware' => 'auth:sanctum'], function ($router) {
     Route::post('/user/profile/update', [UserController::class, 'updateProfile']);
     Route::post('/user/change-password', [UserController::class, 'changePassword']);
     Route::post('/user/account-delete', [UserController::class, 'accountDelete']);
+    Route::get('user/search-agents', [AgentController::class, 'searchAgents']);
+    Route::get('user/search-agents/{slug}', [AgentController::class, 'searchAgentsDetail']);
+    Route::get('user/search-players', [LeagueController::class, 'searchPlayers']);
 
     //session
     Route::post('/session/start', [TrackController::class, 'start']);

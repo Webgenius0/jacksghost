@@ -6,7 +6,7 @@ use App\Traits\ImagePathTrait;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AgentResource extends JsonResource
+class SearchAgentResource extends JsonResource
 {
     use ImagePathTrait;
 
@@ -22,18 +22,13 @@ class AgentResource extends JsonResource
             'institution_name' => $this->institution_name,
             'degree'           => $this->degree,
             'graduation_year'  => $this->graduation_year,
+            'address'          => $this->address,
+            'phone_number'     => $this->phone_number,
+            'email'            => $this->email,
+            'website_link'     => $this->website_link,
             'notable_client'   => $this->notable_client,
             'background_info'  => $this->background_info,
             'status'           => $this->status,
-            // 'payment'          => $this->whenLoaded('payment', function () {
-            //     return [
-            //         'transaction_id'    => $this->payment->transaction_id,
-            //         'payment_status'    => $this->payment->payment_status,
-            //         'amount'            => $this->payment->amount,
-            //         'currency'          => $this->payment->currency,
-            //         'paid_at'           => $this->payment->paid_at,
-            //     ];
-            // }),
             'services'         => $this->whenLoaded('services', function () {
                 return $this->services->map(fn($s) => [
                     'id'           => $s->id,

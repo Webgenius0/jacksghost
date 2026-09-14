@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAgentListingRequest;
 use App\Http\Resources\AgentResource;
+use App\Http\Resources\SearchAgentResource;
 use App\Models\AgentListingTemp;
 use App\Models\AgentPayment;
 use App\Models\Agents;
@@ -264,22 +265,11 @@ class AgentController extends Controller
         return $agent;
     }
 
-    public function getAllAgents(Request $request)
+    public function getListingAgents(Request $request)
     {
         $query = Agents::where('status', 'approved');
 
-        // if ($request->filled('search')) {
-        //     $search = $request->search;
-
-        //     $query->where(function ($q) use ($search) {
-        //         $q->where('agent_name', 'like', "%{$search}%")
-        //             ->orWhere('agency_name', 'like', "%{$search}%")
-        //             ->orWhere('address', 'like', "%{$search}%")
-        //             ->orWhere('institution_name', 'like', "%{$search}%");
-        //     });
-        // }
-
-        $agents = $query->paginate(12);
+        $agents = $query->take(11)->get();
 
         $formattedAgents = $agents->through(function ($agent) {
             return [
@@ -290,9 +280,6 @@ class AgentController extends Controller
                 'agent_photo_url'  => $agent->agent_photo
                     ? $this->fullImageUrlForApi($agent->agent_photo)
                     : null,
-                // 'address'          => $agent->address,
-                // 'phone_number'     => $agent->phone_number,
-                // 'website_link'     => $agent->website_link,
             ];
         });
 
@@ -309,5 +296,52 @@ class AgentController extends Controller
             return $this->error('Agent not found.', 404);
         }
         return $this->success('Agent fetched successfully.', new AgentResource($agent));
+    }
+
+    public function searchAgents(Request $request)
+    {
+        $query = Agents::where('status', 'approved');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('institution_name', 'like', "%{$search}%");
+            });
+        }
+
+        $agents = $query->paginate(12);
+
+        $formattedAgents = $agents->through(function ($agent) {
+            return [
+                'id'               => $agent->id,
+                'agent_name'       => $agent->agent_name,
+                'agency_name'      => $agent->agency_name,
+                'slug'             => $agent->slug,
+                'agent_photo_url'  => $agent->agent_photo
+                    ? $this->fullImageUrlForApi($agent->agent_photo)
+                    : null,
+                'address'          => $agent->address,
+                'phone_number'     => $agent->phone_number,
+                'website_link'     => $agent->website_link,
+            ];
+        });
+
+        return $this->success(
+            'All agents fetched successfully.',
+            $formattedAgents
+        );
+    }
+
+    public function searchAgentsDetail($slug)
+    {
+        $agent = Agents::where('slug', $slug)->where('status', 'approved')->first();
+        if (!$agent) {
+            return $this->error('Agent not found.', 404);
+        }
+        return $this->success('Agent fetched successfully.', new SearchAgentResource($agent));
     }
 }

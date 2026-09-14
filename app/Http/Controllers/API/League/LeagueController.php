@@ -88,4 +88,41 @@ class LeagueController extends Controller
             200
         );
     }
+
+    public function searchPlayers(Request $request)
+    {
+        $query = DraftPlayer::query();
+
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
+        if ($request->filled('sports_type')) {
+            $query->whereHas('league', function ($q) use ($request) {
+                $q->where('league_name', $request->sports_type);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('player_name', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('school', 'like', "%{$search}%")
+                    ->orWhere('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('round', 'like', "%{$search}%")
+                    ->orWhere('pick', 'like', "%{$search}%");
+            });
+        }
+
+        $players = $query->get();
+
+        return $this->success(
+            'Draft players retrieved successfully!',
+            $players,
+            200
+        );
+    }
 }
