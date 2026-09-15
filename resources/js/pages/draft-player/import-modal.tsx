@@ -294,7 +294,7 @@ export default function ImportDraftPlayerModal({ isOpen, onClose, leagues }: Pro
                                         Update existing players
                                     </label>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        Matches on Player Name, League, and Year.
+                                        Matches on First Name, Last Name, League, and Year.
                                     </p>
                                 </div>
                             </div>
@@ -332,11 +332,11 @@ export default function ImportDraftPlayerModal({ isOpen, onClose, leagues }: Pro
                                 <div className="mt-2 text-xs text-muted-foreground space-y-1 bg-background/80 p-2.5 rounded border border-border/50">
                                     <p>
                                         <span className="font-semibold text-foreground">Required:</span>{' '}
-                                        <code className="text-[11px] bg-muted px-1 py-0.5 rounded">Player Name</code>
+                                        <code className="text-[11px] bg-muted px-1 py-0.5 rounded">First Name</code> (or <code className="text-[11px] bg-muted px-1 py-0.5 rounded">Player Name</code>)
                                     </p>
                                     <p>
                                         <span className="font-semibold text-foreground">Optional:</span>{' '}
-                                        League, Year, Round, Pick, Position, School, Agent Name, Agency Name, Height, Weight, Birthdate (YYYY-MM-DD), Nationality, Status (signed / unsigned_draft / undrafted)
+                                        Last Name, Current Team, Draft Team, League, Year, Round, Pick, Position, School, Agent Name, Agency Name, Height, Weight, Birthdate (YYYY-MM-DD), Nationality, Status (signed / unsigned_draft / undrafted)
                                     </p>
                                 </div>
                             )}

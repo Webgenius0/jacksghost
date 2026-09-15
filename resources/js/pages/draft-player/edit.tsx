@@ -14,32 +14,29 @@ import InputError from '@/components/input-error';
 import { League, Year, DraftPlayer } from '@/types';
 import { FormEventHandler } from 'react';
 
-interface Agent {
-    id: number;
-    agent_name: string;
-}
 
 interface Props {
     draftPlayer: DraftPlayer;
     leagues: League[];
     years: Year[];
-    agents: Agent[];
 }
 
 const SELECT_CLASS =
     'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
+export default function Edit({ draftPlayer, leagues, years }: Props) {
     const { data, setData, errors, post, processing } = useForm({
         _method:     'put',
         league_id:   String(draftPlayer.league_id ?? ''),
         year:        String(draftPlayer.year ?? ''),
         round:       String(draftPlayer.round ?? ''),
         pick:        String(draftPlayer.pick ?? ''),
-        player_name: draftPlayer.player_name ?? '',
-        position:    draftPlayer.position ?? '',
-        school:      draftPlayer.school ?? '',
-        agent_id:    String(draftPlayer.agent_id ?? ''),
+        first_name:   draftPlayer.first_name ?? '',
+        last_name:    draftPlayer.last_name ?? '',
+        position:     draftPlayer.position ?? '',
+        current_team: draftPlayer.current_team ?? '',
+        draft_team:   draftPlayer.draft_team ?? '',
+        school:       draftPlayer.school ?? '',
         agent_name:  draftPlayer.agent_name ?? '',
         agency_name: draftPlayer.agency_name ?? '',
         height:      draftPlayer.height ?? '',
@@ -48,6 +45,8 @@ export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
         nationality: draftPlayer.nationality ?? '',
         status:      draftPlayer.status ?? 'unsigned_draft',
     });
+
+    const displayName = [draftPlayer.first_name, draftPlayer.last_name].filter(Boolean).join(' ') || draftPlayer.player_name || 'Player';
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -65,10 +64,10 @@ export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
         <AppLayout
             breadcrumbs={[
                 { title: 'Drafted Players', href: '/draft-player' },
-                { title: `Edit: ${draftPlayer.player_name ?? 'Player'}`, href: `/draft-player/${draftPlayer.id}/edit` },
+                { title: `Edit: ${displayName}`, href: `/draft-player/${draftPlayer.id}/edit` },
             ]}
         >
-            <Head title={`Edit ${draftPlayer.player_name ?? 'Draft Player'}`} />
+            <Head title={`Edit ${displayName}`} />
 
             <div className="m-5">
                 <Card>
@@ -124,20 +123,35 @@ export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
                                     <InputError message={errors.year} />
                                 </div>
 
-                                {/* Player Name */}
+                                {/* First Name */}
                                 <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="edit_player_name">
-                                        Player Name <span className="text-red-500">*</span>
+                                    <Label htmlFor="edit_first_name">
+                                        First Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
-                                        id="edit_player_name"
-                                        value={data.player_name}
-                                        onChange={(e) => setData('player_name', e.target.value)}
-                                        placeholder="Enter player name"
+                                        id="edit_first_name"
+                                        value={data.first_name}
+                                        onChange={(e) => setData('first_name', e.target.value)}
+                                        placeholder="Enter first name"
                                         disabled={processing}
                                         required
                                     />
-                                    <InputError message={errors.player_name} />
+                                    <InputError message={errors.first_name} />
+                                </div>
+
+                                {/* Last Name */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="edit_last_name">
+                                        Last Name
+                                    </Label>
+                                    <Input
+                                        id="edit_last_name"
+                                        value={data.last_name}
+                                        onChange={(e) => setData('last_name', e.target.value)}
+                                        placeholder="Enter last name"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.last_name} />
                                 </div>
 
                                 {/* Position */}
@@ -151,6 +165,32 @@ export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
                                         disabled={processing}
                                     />
                                     <InputError message={errors.position} />
+                                </div>
+
+                                {/* Current Team */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="edit_current_team">Current Team</Label>
+                                    <Input
+                                        id="edit_current_team"
+                                        value={data.current_team}
+                                        onChange={(e) => setData('current_team', e.target.value)}
+                                        placeholder="e.g. Mariners, Lakers"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.current_team} />
+                                </div>
+
+                                {/* Draft Team */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="edit_draft_team">Draft Team</Label>
+                                    <Input
+                                        id="edit_draft_team"
+                                        value={data.draft_team}
+                                        onChange={(e) => setData('draft_team', e.target.value)}
+                                        placeholder="e.g. Giants, Bulls"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.draft_team} />
                                 </div>
 
                                 {/* Round */}
@@ -263,24 +303,6 @@ export default function Edit({ draftPlayer, leagues, years, agents }: Props) {
                                         <option value="undrafted">Undrafted</option>
                                     </select>
                                     <InputError message={errors.status} />
-                                </div>
-
-                                {/* Agent (linked) */}
-                                <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="edit_agent_id">Linked Agent (Optional)</Label>
-                                    <select
-                                        id="edit_agent_id"
-                                        className={SELECT_CLASS}
-                                        value={data.agent_id}
-                                        onChange={(e) => setData('agent_id', e.target.value)}
-                                        disabled={processing}
-                                    >
-                                        <option value="">No linked agent</option>
-                                        {agents.map((a) => (
-                                            <option key={a.id} value={a.id}>{a.agent_name}</option>
-                                        ))}
-                                    </select>
-                                    <InputError message={errors.agent_id} />
                                 </div>
 
                                 {/* Agent Name (free text) */}

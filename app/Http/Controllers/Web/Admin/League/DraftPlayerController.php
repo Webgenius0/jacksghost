@@ -29,8 +29,22 @@ class DraftPlayerController extends Controller
         $leagueId  = $request->input('league_id');
         $yearValue = $request->input('year');
 
-        $query = DraftPlayer::with(['league', 'agent'])
-            ->search(['player_name', 'position', 'school', 'agent_name', 'agency_name', 'nationality']);
+        $query = DraftPlayer::with(['league']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
+                    ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('current_team', 'like', "%{$search}%")
+                    ->orWhere('draft_team', 'like', "%{$search}%")
+                    ->orWhere('school', 'like', "%{$search}%")
+                    ->orWhere('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('nationality', 'like', "%{$search}%");
+            });
+        }
 
         if ($leagueId) {
             $query->where('league_id', $leagueId);
@@ -72,14 +86,9 @@ class DraftPlayerController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        $agents = Agents::select('id', 'agent_name')
-            ->orderBy('agent_name')
-            ->get();
-
         return Inertia::render('draft-player/create', [
             'leagues' => $leagues,
             'years'   => $years,
-            'agents'  => $agents,
         ]);
     }
 
@@ -93,10 +102,12 @@ class DraftPlayerController extends Controller
             'year'         => ['required', 'integer', 'exists:years,year'],
             'round'        => ['nullable', 'integer', 'min:1'],
             'pick'         => ['nullable', 'integer', 'min:1'],
-            'player_name'  => ['required', 'string', 'max:255'],
+            'first_name'   => ['required', 'string', 'max:255'],
+            'last_name'    => ['nullable', 'string', 'max:255'],
             'position'     => ['nullable', 'string', 'max:100'],
+            'current_team' => ['nullable', 'string', 'max:255'],
+            'draft_team'   => ['nullable', 'string', 'max:255'],
             'school'       => ['nullable', 'string', 'max:255'],
-            'agent_id'     => ['nullable', 'exists:agents,id'],
             'agent_name'   => ['nullable', 'string', 'max:255'],
             'agency_name'  => ['nullable', 'string', 'max:255'],
             'height'       => ['nullable', 'string', 'max:20'],
@@ -106,23 +117,27 @@ class DraftPlayerController extends Controller
             'status'       => ['nullable', 'string', 'max:50'],
         ]);
 
+        $fullName = trim("{$request->first_name} {$request->last_name}");
+
         DraftPlayer::create([
-            'league_id'   => $request->league_id,
-            'year'        => $request->year,
-            'round'       => $request->round,
-            'pick'        => $request->pick,
-            'player_name' => $request->player_name,
-            'position'    => $request->position,
-            'school'      => $request->school,
-            'slug'        => Str::slug($request->player_name),
-            'agent_id'    => $request->agent_id ?: null,
-            'agent_name'  => $request->agent_name,
-            'agency_name' => $request->agency_name,
-            'height'      => $request->height,
-            'weight'      => $request->weight,
-            'birthdate'   => $request->birthdate,
-            'nationality' => $request->nationality,
-            'status'      => $request->status ?? 'unsigned_draft',
+            'league_id'    => $request->league_id,
+            'year'         => $request->year,
+            'round'        => $request->round,
+            'pick'         => $request->pick,
+            'first_name'   => $request->first_name,
+            'last_name'    => $request->last_name,
+            'position'     => $request->position,
+            'current_team' => $request->current_team,
+            'draft_team'   => $request->draft_team,
+            'school'       => $request->school,
+            'slug'         => Str::slug($fullName ?: $request->first_name),
+            'agent_name'   => $request->agent_name,
+            'agency_name'  => $request->agency_name,
+            'height'       => $request->height,
+            'weight'       => $request->weight,
+            'birthdate'    => $request->birthdate,
+            'nationality'  => $request->nationality,
+            'status'       => $request->status ?? 'unsigned_draft',
         ]);
 
         return redirect()->route('draft-player.index')->with('success', 'Draft player created successfully!');
@@ -142,15 +157,10 @@ class DraftPlayerController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        $agents = Agents::select('id', 'agent_name')
-            ->orderBy('agent_name')
-            ->get();
-
         return Inertia::render('draft-player/edit', [
             'draftPlayer' => $draftPlayer,
             'leagues'     => $leagues,
             'years'       => $years,
-            'agents'      => $agents,
         ]);
     }
 
@@ -164,10 +174,12 @@ class DraftPlayerController extends Controller
             'year'         => ['required', 'integer', 'exists:years,year'],
             'round'        => ['nullable', 'integer', 'min:1'],
             'pick'         => ['nullable', 'integer', 'min:1'],
-            'player_name'  => ['required', 'string', 'max:255'],
+            'first_name'   => ['required', 'string', 'max:255'],
+            'last_name'    => ['nullable', 'string', 'max:255'],
             'position'     => ['nullable', 'string', 'max:100'],
+            'current_team' => ['nullable', 'string', 'max:255'],
+            'draft_team'   => ['nullable', 'string', 'max:255'],
             'school'       => ['nullable', 'string', 'max:255'],
-            'agent_id'     => ['nullable', 'exists:agents,id'],
             'agent_name'   => ['nullable', 'string', 'max:255'],
             'agency_name'  => ['nullable', 'string', 'max:255'],
             'height'       => ['nullable', 'string', 'max:20'],
@@ -177,23 +189,27 @@ class DraftPlayerController extends Controller
             'status'       => ['nullable', 'string', 'max:50'],
         ]);
 
+        $fullName = trim("{$request->first_name} {$request->last_name}");
+
         $draftPlayer->update([
-            'league_id'   => $request->league_id,
-            'year'        => $request->year,
-            'round'       => $request->round,
-            'pick'        => $request->pick,
-            'player_name' => $request->player_name,
-            'position'    => $request->position,
-            'school'      => $request->school,
-            'slug'        => Str::slug($request->player_name),
-            'agent_id'    => $request->agent_id ?: null,
-            'agent_name'  => $request->agent_name,
-            'agency_name' => $request->agency_name,
-            'height'      => $request->height,
-            'weight'      => $request->weight,
-            'birthdate'   => $request->birthdate,
-            'nationality' => $request->nationality,
-            'status'      => $request->status ?? 'unsigned_draft',
+            'league_id'    => $request->league_id,
+            'year'         => $request->year,
+            'round'        => $request->round,
+            'pick'         => $request->pick,
+            'first_name'   => $request->first_name,
+            'last_name'    => $request->last_name,
+            'position'     => $request->position,
+            'current_team' => $request->current_team,
+            'draft_team'   => $request->draft_team,
+            'school'       => $request->school,
+            'slug'         => Str::slug($fullName ?: $request->first_name),
+            'agent_name'   => $request->agent_name,
+            'agency_name'  => $request->agency_name,
+            'height'       => $request->height,
+            'weight'       => $request->weight,
+            'birthdate'    => $request->birthdate,
+            'nationality'  => $request->nationality,
+            'status'       => $request->status ?? 'unsigned_draft',
         ]);
 
         return redirect()->route('draft-player.index')->with('success', 'Draft player updated successfully!');
@@ -214,8 +230,23 @@ class DraftPlayerController extends Controller
      */
     public function export(Request $request)
     {
-        $query = DraftPlayer::with(['league', 'agent'])
-            ->search(['player_name', 'position', 'school', 'agent_name', 'agency_name', 'nationality']);
+        $query = DraftPlayer::with(['league']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
+                    ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('current_team', 'like', "%{$search}%")
+                    ->orWhere('draft_team', 'like', "%{$search}%")
+                    ->orWhere('school', 'like', "%{$search}%")
+                    ->orWhere('agent_name', 'like', "%{$search}%")
+                    ->orWhere('agency_name', 'like', "%{$search}%")
+                    ->orWhere('nationality', 'like', "%{$search}%");
+            });
+        }
 
         if ($request->filled('league_id')) {
             $query->where('league_id', $request->league_id);
@@ -235,12 +266,15 @@ class DraftPlayerController extends Controller
         $sheet->setTitle('Draft Players');
 
         $headers = [
-            'Player Name',
+            'First Name',
+            'Last Name',
             'League',
             'Year',
             'Round',
             'Pick',
             'Position',
+            'Current Team',
+            'Draft Team',
             'School',
             'Agent Name',
             'Agency Name',
@@ -251,13 +285,13 @@ class DraftPlayerController extends Controller
             'Status',
         ];
 
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'];
 
         foreach ($headers as $index => $header) {
             $sheet->setCellValue("{$columns[$index]}1", $header);
         }
 
-        $sheet->getStyle('A1:N1')->applyFromArray([
+        $sheet->getStyle('A1:Q1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -276,23 +310,26 @@ class DraftPlayerController extends Controller
 
         $rowIndex = 2;
         foreach ($draftPlayers as $player) {
-            $sheet->setCellValue("A{$rowIndex}", $player->player_name ?? '');
-            $sheet->setCellValue("B{$rowIndex}", $player->league?->league_name ?? '');
-            $sheet->setCellValue("C{$rowIndex}", $player->year ?? '');
-            $sheet->setCellValue("D{$rowIndex}", $player->round ?? '');
-            $sheet->setCellValue("E{$rowIndex}", $player->pick ?? '');
-            $sheet->setCellValue("F{$rowIndex}", $player->position ?? '');
-            $sheet->setCellValue("G{$rowIndex}", $player->school ?? '');
-            $sheet->setCellValue("H{$rowIndex}", $player->agent_name ?: ($player->agent?->agent_name ?? ''));
-            $sheet->setCellValue("I{$rowIndex}", $player->agency_name ?: ($player->agent?->agency_name ?? ''));
-            $sheet->setCellValue("J{$rowIndex}", $player->height ?? '');
-            $sheet->setCellValue("K{$rowIndex}", $player->weight ?? '');
-            $sheet->setCellValue("L{$rowIndex}", $player->birthdate ? Carbon::parse($player->birthdate)->format('Y-m-d') : '');
-            $sheet->setCellValue("M{$rowIndex}", $player->nationality ?? '');
-            $sheet->setCellValue("N{$rowIndex}", $player->status ?? 'unsigned_draft');
+            $sheet->setCellValue("A{$rowIndex}", $player->first_name ?? '');
+            $sheet->setCellValue("B{$rowIndex}", $player->last_name ?? '');
+            $sheet->setCellValue("C{$rowIndex}", $player->league?->league_name ?? '');
+            $sheet->setCellValue("D{$rowIndex}", $player->year ?? '');
+            $sheet->setCellValue("E{$rowIndex}", $player->round ?? '');
+            $sheet->setCellValue("F{$rowIndex}", $player->pick ?? '');
+            $sheet->setCellValue("G{$rowIndex}", $player->position ?? '');
+            $sheet->setCellValue("H{$rowIndex}", $player->current_team ?? '');
+            $sheet->setCellValue("I{$rowIndex}", $player->draft_team ?? '');
+            $sheet->setCellValue("J{$rowIndex}", $player->school ?? '');
+            $sheet->setCellValue("K{$rowIndex}", $player->agent_name ?: ($player->agent?->agent_name ?? ''));
+            $sheet->setCellValue("L{$rowIndex}", $player->agency_name ?: ($player->agent?->agency_name ?? ''));
+            $sheet->setCellValue("M{$rowIndex}", $player->height ?? '');
+            $sheet->setCellValue("N{$rowIndex}", $player->weight ?? '');
+            $sheet->setCellValue("O{$rowIndex}", $player->birthdate ? Carbon::parse($player->birthdate)->format('Y-m-d') : '');
+            $sheet->setCellValue("P{$rowIndex}", $player->nationality ?? '');
+            $sheet->setCellValue("Q{$rowIndex}", $player->status ?? 'unsigned_draft');
 
             if ($rowIndex % 2 === 0) {
-                $sheet->getStyle("A{$rowIndex}:N{$rowIndex}")->applyFromArray([
+                $sheet->getStyle("A{$rowIndex}:Q{$rowIndex}")->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['rgb' => 'F8FAFC'],
@@ -328,12 +365,15 @@ class DraftPlayerController extends Controller
         $sheet->setTitle('Draft Players Template');
 
         $headers = [
-            'Player Name',
+            'First Name',
+            'Last Name',
             'League',
             'Year',
             'Round',
             'Pick',
             'Position',
+            'Current Team',
+            'Draft Team',
             'School',
             'Agent Name',
             'Agency Name',
@@ -344,13 +384,13 @@ class DraftPlayerController extends Controller
             'Status',
         ];
 
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'];
 
         foreach ($headers as $index => $header) {
             $sheet->setCellValue("{$columns[$index]}1", $header);
         }
 
-        $sheet->getStyle('A1:N1')->applyFromArray([
+        $sheet->getStyle('A1:Q1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -371,12 +411,15 @@ class DraftPlayerController extends Controller
 
         $sampleData = [
             [
-                'John Smith',
+                'John',
+                'Smith',
                 $sampleLeague,
                 2026,
                 1,
                 1,
                 'PG',
+                'Mariners',
+                'Giants',
                 'Arizona State University, Arizona',
                 'Michael Brown',
                 'ABC Sports',
@@ -387,12 +430,15 @@ class DraftPlayerController extends Controller
                 'unsigned_draft',
             ],
             [
-                'Alex Rodriguez',
+                'Alex',
+                'Rodriguez',
                 $sampleLeague,
                 2026,
                 1,
                 2,
                 'SS',
+                'Yankees',
+                'Mariners',
                 'University of Miami, Florida',
                 'Scott Boras',
                 'Boras Corporation',
@@ -461,7 +507,11 @@ class DraftPlayerController extends Controller
             }
             $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string)$headerVal)));
 
-            if (in_array($normalized, ['playername', 'player', 'name', 'fullname'])) {
+            if (in_array($normalized, ['firstname', 'fname', 'first'])) {
+                $headerMap[$colIdx] = 'first_name';
+            } elseif (in_array($normalized, ['lastname', 'lname', 'last', 'surname'])) {
+                $headerMap[$colIdx] = 'last_name';
+            } elseif (in_array($normalized, ['playername', 'player', 'name', 'fullname'])) {
                 $headerMap[$colIdx] = 'player_name';
             } elseif (in_array($normalized, ['league', 'leaguename', 'leagueid', 'leagueslug'])) {
                 $headerMap[$colIdx] = 'league';
@@ -473,7 +523,11 @@ class DraftPlayerController extends Controller
                 $headerMap[$colIdx] = 'pick';
             } elseif (in_array($normalized, ['position', 'pos'])) {
                 $headerMap[$colIdx] = 'position';
-            } elseif (in_array($normalized, ['school', 'college', 'university', 'team'])) {
+            } elseif (in_array($normalized, ['currentteam', 'current_team', 'team', 'presentteam'])) {
+                $headerMap[$colIdx] = 'current_team';
+            } elseif (in_array($normalized, ['draftteam', 'draft_team', 'draftedteam', 'draftedby'])) {
+                $headerMap[$colIdx] = 'draft_team';
+            } elseif (in_array($normalized, ['school', 'college', 'university'])) {
                 $headerMap[$colIdx] = 'school';
             } elseif (in_array($normalized, ['agentname', 'agent', 'representative'])) {
                 $headerMap[$colIdx] = 'agent_name';
@@ -492,12 +546,11 @@ class DraftPlayerController extends Controller
             }
         }
 
-        if (!in_array('player_name', $headerMap)) {
-            return redirect()->back()->with('error', 'Could not find a "Player Name" column in the uploaded file header.');
+        if (!in_array('first_name', $headerMap) && !in_array('player_name', $headerMap)) {
+            return redirect()->back()->with('error', 'Could not find a "First Name" (or "Player Name") column in the uploaded file header.');
         }
 
         $allLeagues = League::all();
-        $allAgents = Agents::all();
         $defaultLeague = $request->default_league_id
             ? $allLeagues->firstWhere('id', $request->default_league_id)
             : $allLeagues->firstWhere('is_draft_pick', true);
@@ -527,12 +580,23 @@ class DraftPlayerController extends Controller
                 $rowData[$key] = isset($row[$colIdx]) ? trim((string)$row[$colIdx]) : null;
             }
 
-            $playerName = $rowData['player_name'] ?? null;
-            if (empty($playerName)) {
-                $errors[] = "Row {$rowNum}: Player name is missing.";
+            $firstName = $rowData['first_name'] ?? null;
+            $lastName  = $rowData['last_name'] ?? null;
+
+            // Fallback: If only player_name/fullname was provided in uploaded spreadsheet
+            if (empty($firstName) && !empty($rowData['player_name'])) {
+                $parts = explode(' ', trim($rowData['player_name']), 2);
+                $firstName = $parts[0] ?? null;
+                $lastName  = $parts[1] ?? null;
+            }
+
+            if (empty($firstName)) {
+                $errors[] = "Row {$rowNum}: First name is missing.";
                 $skippedCount++;
                 continue;
             }
+
+            $fullName = trim("{$firstName} {$lastName}");
 
             // Resolve League
             $leagueId = null;
@@ -551,7 +615,7 @@ class DraftPlayerController extends Controller
                 $leagueId = $defaultLeague->id;
             }
             if (!$leagueId) {
-                $errors[] = "Row {$rowNum} ({$playerName}): League '{$rowLeague}' could not be resolved and no default draft league is selected.";
+                $errors[] = "Row {$rowNum} ({$fullName}): League '{$rowLeague}' could not be resolved and no default draft league is selected.";
                 $skippedCount++;
                 continue;
             }
@@ -567,19 +631,6 @@ class DraftPlayerController extends Controller
             // Resolve Agent
             $agentName  = $rowData['agent_name'] ?? null;
             $agencyName = $rowData['agency_name'] ?? null;
-            $agentId    = null;
-
-            if (!empty($agentName)) {
-                $matchedAgent = $allAgents->first(function ($a) use ($agentName) {
-                    return strcasecmp(trim($a->agent_name), $agentName) === 0;
-                });
-                if ($matchedAgent) {
-                    $agentId = $matchedAgent->id;
-                    if (empty($agencyName) && !empty($matchedAgent->agency_name)) {
-                        $agencyName = $matchedAgent->agency_name;
-                    }
-                }
-            }
 
             // Resolve Birthdate
             $birthdate = null;
@@ -612,26 +663,36 @@ class DraftPlayerController extends Controller
             }
 
             try {
-                $existing = DraftPlayer::where('player_name', $playerName)
+                $existingQuery = DraftPlayer::where('first_name', $firstName)
                     ->where('year', $yearVal)
-                    ->where('league_id', $leagueId)
-                    ->first();
+                    ->where('league_id', $leagueId);
+
+                if (!empty($lastName)) {
+                    $existingQuery->where('last_name', $lastName);
+                } else {
+                    $existingQuery->where(function ($q) {
+                        $q->whereNull('last_name')->orWhere('last_name', '');
+                    });
+                }
+
+                $existing = $existingQuery->first();
 
                 if ($existing) {
                     if ($updateExisting) {
                         $existing->update([
-                            'round'       => $round ?? $existing->round,
-                            'pick'        => $pick ?? $existing->pick,
-                            'position'    => $rowData['position'] ?: $existing->position,
-                            'school'      => $rowData['school'] ?: $existing->school,
-                            'agent_id'    => $agentId ?: $existing->agent_id,
-                            'agent_name'  => $agentName ?: $existing->agent_name,
-                            'agency_name' => $agencyName ?: $existing->agency_name,
-                            'height'      => $rowData['height'] ?: $existing->height,
-                            'weight'      => $rowData['weight'] ?: $existing->weight,
-                            'birthdate'   => $birthdate ?: $existing->birthdate,
-                            'nationality' => $rowData['nationality'] ?: $existing->nationality,
-                            'status'      => $status,
+                            'round'        => $round ?? $existing->round,
+                            'pick'         => $pick ?? $existing->pick,
+                            'position'     => $rowData['position'] ?: $existing->position,
+                            'current_team' => $rowData['current_team'] ?: $existing->current_team,
+                            'draft_team'   => $rowData['draft_team'] ?: $existing->draft_team,
+                            'school'       => $rowData['school'] ?: $existing->school,
+                            'agent_name'   => $agentName ?: $existing->agent_name,
+                            'agency_name'  => $agencyName ?: $existing->agency_name,
+                            'height'       => $rowData['height'] ?: $existing->height,
+                            'weight'       => $rowData['weight'] ?: $existing->weight,
+                            'birthdate'    => $birthdate ?: $existing->birthdate,
+                            'nationality'  => $rowData['nationality'] ?: $existing->nationality,
+                            'status'       => $status,
                         ]);
                         $updatedCount++;
                     } else {
@@ -639,27 +700,29 @@ class DraftPlayerController extends Controller
                     }
                 } else {
                     DraftPlayer::create([
-                        'league_id'   => $leagueId,
-                        'year'        => $yearVal,
-                        'round'       => $round,
-                        'pick'        => $pick,
-                        'player_name' => $playerName,
-                        'position'    => $rowData['position'] ?? null,
-                        'school'      => $rowData['school'] ?? null,
-                        'slug'        => Str::slug($playerName),
-                        'agent_id'    => $agentId,
-                        'agent_name'  => $agentName,
-                        'agency_name' => $agencyName,
-                        'height'      => $rowData['height'] ?? null,
-                        'weight'      => $rowData['weight'] ?? null,
-                        'birthdate'   => $birthdate,
-                        'nationality' => $rowData['nationality'] ?? null,
-                        'status'      => $status,
+                        'league_id'    => $leagueId,
+                        'year'         => $yearVal,
+                        'round'        => $round,
+                        'pick'         => $pick,
+                        'first_name'   => $firstName,
+                        'last_name'    => $lastName,
+                        'position'     => $rowData['position'] ?? null,
+                        'current_team' => $rowData['current_team'] ?? null,
+                        'draft_team'   => $rowData['draft_team'] ?? null,
+                        'school'       => $rowData['school'] ?? null,
+                        'slug'         => Str::slug($fullName ?: $firstName),
+                        'agent_name'   => $agentName,
+                        'agency_name'  => $agencyName,
+                        'height'       => $rowData['height'] ?? null,
+                        'weight'       => $rowData['weight'] ?? null,
+                        'birthdate'    => $birthdate,
+                        'nationality'  => $rowData['nationality'] ?? null,
+                        'status'       => $status,
                     ]);
                     $createdCount++;
                 }
             } catch (\Throwable $e) {
-                $errors[] = "Row {$rowNum} ({$playerName}): " . $e->getMessage();
+                $errors[] = "Row {$rowNum} ({$fullName}): " . $e->getMessage();
                 $skippedCount++;
             }
         }

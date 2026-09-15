@@ -70,8 +70,12 @@ class LeagueController extends Controller
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-                $q->where('player_name', 'like', "%{$search}%")
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
                     ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('current_team', 'like', "%{$search}%")
+                    ->orWhere('draft_team', 'like', "%{$search}%")
                     ->orWhere('school', 'like', "%{$search}%")
                     ->orWhere('agent_name', 'like', "%{$search}%")
                     ->orWhere('agency_name', 'like', "%{$search}%")
@@ -107,8 +111,12 @@ class LeagueController extends Controller
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-                $q->where('player_name', 'like', "%{$search}%")
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
                     ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('current_team', 'like', "%{$search}%")
+                    ->orWhere('draft_team', 'like', "%{$search}%")
                     ->orWhere('school', 'like', "%{$search}%")
                     ->orWhere('agent_name', 'like', "%{$search}%")
                     ->orWhere('agency_name', 'like', "%{$search}%")

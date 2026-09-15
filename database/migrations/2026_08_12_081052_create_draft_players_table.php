@@ -17,11 +17,13 @@ return new class extends Migration
             $table->unsignedSmallInteger('year')->nullable();
             $table->integer('round')->nullable();
             $table->integer('pick')->nullable();
-            $table->string('player_name')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('position')->nullable();
+            $table->string('current_team')->nullable();
+            $table->string('draft_team')->nullable();
             $table->string('school')->nullable();
             $table->string('slug')->nullable();
-            $table->foreignId('agent_id')->nullable()->constrained()->nullOnDelete();
             $table->string('agent_name')->nullable();
             $table->string('agency_name')->nullable();
             $table->string('height')->nullable();

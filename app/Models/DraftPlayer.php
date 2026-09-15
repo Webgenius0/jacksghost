@@ -14,11 +14,13 @@ class DraftPlayer extends Model
         'year',
         'round',
         'pick',
-        'player_name',
+        'first_name',
+        'last_name',
         'position',
+        'current_team',
+        'draft_team',
         'school',
         'slug',
-        'agent_id',
         'agent_name',
         'agency_name',
         'height',
@@ -27,6 +29,15 @@ class DraftPlayer extends Model
         'nationality',
         'status',
     ];
+
+    protected $appends = [
+        'player_name',
+    ];
+
+    public function getPlayerNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
 
     protected $casts = [
         'year'       => 'integer',
@@ -40,11 +51,6 @@ class DraftPlayer extends Model
     public function league()
     {
         return $this->belongsTo(League::class);
-    }
-
-    public function agent()
-    {
-        return $this->belongsTo(Agents::class, 'agent_id');
     }
 }
 

@@ -54,11 +54,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const columns = [
-    { label: 'Player Name', key: 'player_name' as keyof DraftPlayerRow, sortable: true },
+    { label: 'Player Name', key: 'first_name' as keyof DraftPlayerRow, sortable: true },
     { label: 'League',      key: 'league_id'   as keyof DraftPlayerRow, sortable: false },
     { label: 'Year',        key: 'year'        as keyof DraftPlayerRow, sortable: true },
     { label: 'Round / Pick',key: 'round'       as keyof DraftPlayerRow, sortable: true },
     { label: 'Position',    key: 'position'    as keyof DraftPlayerRow, sortable: true },
+    { label: 'Teams',       key: 'draft_team'  as keyof DraftPlayerRow, sortable: false },
     { label: 'School',      key: 'school'      as keyof DraftPlayerRow, sortable: true },
     { label: 'Status',      key: 'status'      as keyof DraftPlayerRow, sortable: true },
     { label: 'Actions',     key: 'actions'     as keyof DraftPlayerRow },
@@ -266,17 +267,32 @@ export default function Index({ draftPlayers, leagues, years }: Props) {
                             currentPage={draftPlayers.current_page}
                             rowsPerPage={draftPlayers.per_page}
                             columns={columns}
-                            searchableKeys={['player_name', 'position', 'school', 'agent_name']}
+                            searchableKeys={['first_name', 'last_name', 'position', 'current_team', 'draft_team', 'school', 'agent_name']}
                             renderCell={(key, _value, row) => {
-                                if (key === 'player_name') {
+                                if (key === 'first_name' || key === 'player_name') {
+                                    const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ') || row.player_name || '—';
                                     return (
                                         <div>
                                             <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                                {row.player_name ?? '—'}
+                                                {fullName}
                                             </p>
                                             {row.nationality && (
                                                 <p className="text-xs text-muted-foreground">{row.nationality}</p>
                                             )}
+                                        </div>
+                                    );
+                                }
+
+                                if (key === 'draft_team') {
+                                    return (
+                                        <div className="text-xs space-y-0.5">
+                                            {row.draft_team && (
+                                                <p><span className="text-muted-foreground">Draft:</span> <span className="font-medium text-foreground">{row.draft_team}</span></p>
+                                            )}
+                                            {row.current_team && (
+                                                <p><span className="text-muted-foreground">Current:</span> <span className="font-medium text-foreground">{row.current_team}</span></p>
+                                            )}
+                                            {!row.draft_team && !row.current_team && <span className="text-muted-foreground">—</span>}
                                         </div>
                                     );
                                 }

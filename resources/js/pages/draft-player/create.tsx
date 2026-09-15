@@ -14,30 +14,27 @@ import InputError from '@/components/input-error';
 import { League, Year } from '@/types';
 import { FormEventHandler } from 'react';
 
-interface Agent {
-    id: number;
-    agent_name: string;
-}
 
 interface Props {
     leagues: League[];
     years: Year[];
-    agents: Agent[];
 }
 
 const SELECT_CLASS =
     'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function Create({ leagues, years, agents }: Props) {
+export default function Create({ leagues, years }: Props) {
     const { data, setData, errors, post, processing, reset } = useForm({
         league_id:   '',
         year:        '',
         round:       '',
         pick:        '',
-        player_name: '',
-        position:    '',
-        school:      '',
-        agent_id:    '',
+        first_name:   '',
+        last_name:    '',
+        position:     '',
+        current_team: '',
+        draft_team:   '',
+        school:       '',
         agent_name:  '',
         agency_name: '',
         height:      '',
@@ -95,7 +92,7 @@ export default function Create({ leagues, years, agents }: Props) {
                                     >
                                         <option value="">Select a league</option>
                                         {leagues.map((l) => (
-                                            <option key={l.id} value={l.id}>{l.league_name}</option>
+                                             <option key={l.id} value={l.id}>{l.league_name}</option>
                                         ))}
                                     </select>
                                     <InputError message={errors.league_id} />
@@ -122,20 +119,35 @@ export default function Create({ leagues, years, agents }: Props) {
                                     <InputError message={errors.year} />
                                 </div>
 
-                                {/* Player Name */}
+                                {/* First Name */}
                                 <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="player_name">
-                                        Player Name <span className="text-red-500">*</span>
+                                    <Label htmlFor="first_name">
+                                        First Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
-                                        id="player_name"
-                                        value={data.player_name}
-                                        onChange={(e) => setData('player_name', e.target.value)}
-                                        placeholder="Enter player name"
+                                        id="first_name"
+                                        value={data.first_name}
+                                        onChange={(e) => setData('first_name', e.target.value)}
+                                        placeholder="Enter first name"
                                         disabled={processing}
                                         required
                                     />
-                                    <InputError message={errors.player_name} />
+                                    <InputError message={errors.first_name} />
+                                </div>
+
+                                {/* Last Name */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="last_name">
+                                        Last Name
+                                    </Label>
+                                    <Input
+                                        id="last_name"
+                                        value={data.last_name}
+                                        onChange={(e) => setData('last_name', e.target.value)}
+                                        placeholder="Enter last name"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.last_name} />
                                 </div>
 
                                 {/* Position */}
@@ -149,6 +161,32 @@ export default function Create({ leagues, years, agents }: Props) {
                                         disabled={processing}
                                     />
                                     <InputError message={errors.position} />
+                                </div>
+
+                                {/* Current Team */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="current_team">Current Team</Label>
+                                    <Input
+                                        id="current_team"
+                                        value={data.current_team}
+                                        onChange={(e) => setData('current_team', e.target.value)}
+                                        placeholder="e.g. Mariners, Lakers"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.current_team} />
+                                </div>
+
+                                {/* Draft Team */}
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label htmlFor="draft_team">Draft Team</Label>
+                                    <Input
+                                        id="draft_team"
+                                        value={data.draft_team}
+                                        onChange={(e) => setData('draft_team', e.target.value)}
+                                        placeholder="e.g. Giants, Bulls"
+                                        disabled={processing}
+                                    />
+                                    <InputError message={errors.draft_team} />
                                 </div>
 
                                 {/* Round */}
@@ -261,24 +299,6 @@ export default function Create({ leagues, years, agents }: Props) {
                                         <option value="undrafted">Undrafted</option>
                                     </select>
                                     <InputError message={errors.status} />
-                                </div>
-
-                                {/* Agent (linked) */}
-                                <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="agent_id">Linked Agent (Optional)</Label>
-                                    <select
-                                        id="agent_id"
-                                        className={SELECT_CLASS}
-                                        value={data.agent_id}
-                                        onChange={(e) => setData('agent_id', e.target.value)}
-                                        disabled={processing}
-                                    >
-                                        <option value="">No linked agent</option>
-                                        {agents.map((a) => (
-                                            <option key={a.id} value={a.id}>{a.agent_name}</option>
-                                        ))}
-                                    </select>
-                                    <InputError message={errors.agent_id} />
                                 </div>
 
                                 {/* Agent Name (free text) */}

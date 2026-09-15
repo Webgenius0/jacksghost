@@ -205,8 +205,12 @@ export interface DraftPlayer {
     year: number | null;
     round: number | null;
     pick: number | null;
-    player_name: string | null;
+    first_name: string;
+    last_name: string | null;
+    player_name?: string | null;
     position: string | null;
+    current_team: string | null;
+    draft_team: string | null;
     school: string | null;
     slug: string | null;
     agent_id: number | null;

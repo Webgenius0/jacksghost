@@ -267,17 +267,17 @@ class AgentController extends Controller
 
     public function getListingAgents(Request $request)
     {
-        $query = Agents::where('status', 'approved');
+        $agents = Agents::where('status', 'approved')
+            ->take(11)
+            ->get();
 
-        $agents = $query->take(11)->get();
-
-        $formattedAgents = $agents->through(function ($agent) {
+        $formattedAgents = $agents->map(function ($agent) {
             return [
-                'id'               => $agent->id,
-                'agent_name'       => $agent->agent_name,
-                'agency_name'      => $agent->agency_name,
-                'slug'             => $agent->slug,
-                'agent_photo_url'  => $agent->agent_photo
+                'id'              => $agent->id,
+                'agent_name'      => $agent->agent_name,
+                'agency_name'     => $agent->agency_name,
+                'slug'            => $agent->slug,
+                'agent_photo_url' => $agent->agent_photo
                     ? $this->fullImageUrlForApi($agent->agent_photo)
                     : null,
             ];
@@ -288,6 +288,7 @@ class AgentController extends Controller
             $formattedAgents
         );
     }
+
 
     public function getAgentDetail($slug)
     {
