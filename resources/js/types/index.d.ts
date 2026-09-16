@@ -156,6 +156,28 @@ export interface PaginatedLeagues {
     }[];
 }
 
+export interface CurrentTeam {
+    id: number;
+    league_id: number;
+    team_name: string;
+    created_at: string;
+    updated_at: string;
+    league?: League;
+}
+
+export interface PaginatedCurrentTeams {
+    data: CurrentTeam[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+}
+
 export interface LeagueContent {
     id: number;
     league_id: number;

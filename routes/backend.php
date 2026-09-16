@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\Admin\Faq\FaqController;
 use App\Http\Controllers\Web\Admin\DynamicPage\DynamicPageController;
 use App\Http\Controllers\Web\Admin\Notification\NotificationController;
 use App\Http\Controllers\Web\Admin\League\LeagueController;
+use App\Http\Controllers\Web\Admin\League\CurrentTeamController;
 use App\Http\Controllers\Web\Admin\League\DraftPlayerController;
 use App\Http\Controllers\Web\Admin\Year\YearController;
 use App\Http\Controllers\Web\Admin\Payment\AgentPaymentController;
@@ -36,6 +37,7 @@ Route::resource('/faq', FaqController::class);
 Route::resource('/contact', ContactController::class);
 
 Route::resource('/league', LeagueController::class);
+Route::resource('/current-team', CurrentTeamController::class);
 Route::resource('/league-content', \App\Http\Controllers\Web\Admin\League\LeagueContentController::class);
 Route::get('/draft-player/export', [DraftPlayerController::class, 'export'])->name('draft-player.export');
 Route::get('/draft-player/template', [DraftPlayerController::class, 'template'])->name('draft-player.template');

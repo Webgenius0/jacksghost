@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Folder, LayoutGrid, Activity, ClipboardCheck, ShieldAlert, FolderDot, ScrollText, MessageSquareWarning, Users, Package, Mail, Newspaper, ClipboardList, Ticket, ShoppingCart, Box, Settings, Trophy, FileText, Calendar, UserCheck, Briefcase, CreditCard, Wallet, Repeat } from 'lucide-react';
+import { Folder, LayoutGrid, Activity, ClipboardCheck, Shield, ShieldAlert, FolderDot, ScrollText, MessageSquareWarning, Users, Package, Mail, Newspaper, ClipboardList, Ticket, ShoppingCart, Box, Settings, Trophy, FileText, Calendar, UserCheck, Briefcase, CreditCard, Wallet, Repeat } from 'lucide-react';
 import AppLogo from './app-logo';
 import { useMemo } from 'react';
 
@@ -45,6 +45,11 @@ const mainNavItems: NavItem[] = [
                 title: 'All Leagues',
                 href: '/league',
                 icon: Trophy,
+            },
+            {
+                title: 'Current Teams',
+                href: '/current-team',
+                icon: Shield,
             },
             {
                 title: 'League Contents',

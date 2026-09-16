@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             YearSeeder::class,
             LeagueSeeder::class,
+            CurrentTeamSeeder::class,
             DraftPlayerSeeder::class,
         ]);
     }

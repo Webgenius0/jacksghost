@@ -26,4 +26,9 @@ class League extends Model
     {
         return $this->hasOne(LeagueContent::class, 'league_id', 'id');
     }
+
+    public function currentTeams()
+    {
+        return $this->hasMany(CurrentTeam::class, 'league_id', 'id');
+    }
 }
