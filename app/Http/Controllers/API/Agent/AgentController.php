@@ -267,7 +267,7 @@ class AgentController extends Controller
 
     public function getListingAgents(Request $request)
     {
-        $agents = Agents::where('status', 'approved')
+        $agents = Agents::with('services')->where('status', 'approved')
             ->take(11)
             ->get();
 
@@ -280,6 +280,7 @@ class AgentController extends Controller
                 'agent_photo_url' => $agent->agent_photo
                     ? $this->fullImageUrlForApi($agent->agent_photo)
                     : null,
+                'services'        => $agent->services->pluck('service_name'),
             ];
         });
 

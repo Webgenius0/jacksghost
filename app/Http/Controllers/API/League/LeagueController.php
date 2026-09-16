@@ -63,28 +63,22 @@ class LeagueController extends Controller
             return $this->error('Draft picks league not found', 404);
         }
 
-        $query = DraftPlayer::where('league_id', $league->id)
-            ->where('year', $year);
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
-                    ->orWhere('position', 'like', "%{$search}%")
-                    ->orWhere('current_team', 'like', "%{$search}%")
-                    ->orWhere('draft_team', 'like', "%{$search}%")
-                    ->orWhere('school', 'like', "%{$search}%")
-                    ->orWhere('agent_name', 'like', "%{$search}%")
-                    ->orWhere('agency_name', 'like', "%{$search}%")
-                    ->orWhere('round', 'like', "%{$search}%")
-                    ->orWhere('pick', 'like', "%{$search}%");
+        $players = DraftPlayer::where('league_id', $league->id)
+            ->where('year', $year)
+            ->get()
+            ->map(function ($player) {
+                return [
+                    'id' => $player->id,
+                    'year' => $player->year,
+                    'slug' => $player->slug,
+                    'round' => $player->round,
+                    'pick' => $player->pick,
+                    'draft_team' => $player->draft_team,
+                    'first_name' => $player->first_name,
+                    'last_name' => $player->last_name,
+                    'position' => $player->position,
+                ];
             });
-        }
-
-        $players = $query->get();
 
         return $this->success(
             'Draft players retrieved successfully!',
@@ -92,6 +86,7 @@ class LeagueController extends Controller
             200
         );
     }
+
 
     public function searchPlayers(Request $request)
     {
@@ -113,15 +108,8 @@ class LeagueController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"])
                     ->orWhere('position', 'like', "%{$search}%")
-                    ->orWhere('current_team', 'like', "%{$search}%")
-                    ->orWhere('draft_team', 'like', "%{$search}%")
-                    ->orWhere('school', 'like', "%{$search}%")
-                    ->orWhere('agent_name', 'like', "%{$search}%")
-                    ->orWhere('agency_name', 'like', "%{$search}%")
-                    ->orWhere('round', 'like', "%{$search}%")
-                    ->orWhere('pick', 'like', "%{$search}%");
+                    ->orWhere('current_team', 'like', "%{$search}%");
             });
         }
 
