@@ -79,7 +79,7 @@ class UserController extends Controller
     }
 
 
-    public function getStatus(): bool
+    public function getStatus()
     {
         $user = Auth::user();
 
@@ -88,7 +88,10 @@ class UserController extends Controller
             ->first();
 
         if (!$subscription) {
-            return false;
+            return [
+                'is_active' => false,
+                'expiry_date' => null,
+            ];
         }
 
         if (
@@ -108,6 +111,9 @@ class UserController extends Controller
             && $subscription->subscription_expire_date->isFuture();
 
 
-        return $isActive;
+        return [
+            'is_active' => $isActive,
+            'expiry_date' => $subscription->subscription_expire_date ? $subscription->subscription_expire_date->format('Y-m-d') : null,
+        ];
     }
 }

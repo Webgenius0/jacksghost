@@ -23,7 +23,8 @@ class UserResource extends JsonResource
             'role'            => $this->role,
             'status'          => $this->status,
             'timezone'        => $this->timezone,
-            'is_subscribed'   => $this->is_subscribed,
+            'is_subscribed'   => $this->is_subscribed['is_active'] ?? false,
+            'expiry_date'     => $this->is_subscribed['expiry_date'] ?? null,
         ];
     }
 }
