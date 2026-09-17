@@ -293,7 +293,7 @@ class AgentController extends Controller
 
     public function getAgentDetail($slug)
     {
-        $agent = Agents::where('slug', $slug)->where('status', 'approved')->first();
+        $agent = Agents::with('services', 'certifications')->where('slug', $slug)->where('status', 'approved')->first();
         if (!$agent) {
             return $this->error('Agent not found.', 404);
         }
@@ -340,7 +340,7 @@ class AgentController extends Controller
 
     public function searchAgentsDetail($slug)
     {
-        $agent = Agents::where('slug', $slug)->where('status', 'approved')->first();
+        $agent = Agents::with('services', 'certifications')->where('slug', $slug)->where('status', 'approved')->first();
         if (!$agent) {
             return $this->error('Agent not found.', 404);
         }
