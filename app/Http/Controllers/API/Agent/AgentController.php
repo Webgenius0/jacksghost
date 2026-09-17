@@ -115,8 +115,8 @@ class AgentController extends Controller
                     'quantity' => 1,
                 ],
             ],
-            'success_url'  => $frontendUrl . '/agent/listing-success?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'   => $frontendUrl . '/agent/listing-cancelled',
+            'success_url'  => $frontendUrl . '/register-agent/listing-success?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url'   => $frontendUrl . '/register-agent/listing-cancelled',
             'metadata'     => [
                 'agent_name' => $request->agent_name,
                 'email'      => $email,
