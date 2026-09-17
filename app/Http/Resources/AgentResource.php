@@ -36,18 +36,12 @@ class AgentResource extends JsonResource
             // }),
             'services'         => $this->whenLoaded('services', function () {
                 return $this->services->map(fn($s) => [
-                    'id'           => $s->id,
                     'service_name' => $s->service_name,
                 ]);
             }),
             'certifications'   => $this->whenLoaded('certifications', function () {
                 return $this->certifications->map(fn($c) => [
-                    'id'               => $c->id,
                     'certificate_name' => $c->certificate_name,
-                    'certificate_file' => $c->certificate_file,
-                    'certificate_file_url' => $c->certificate_file
-                        ? $this->fullImageUrlForApi($c->certificate_file)
-                        : null,
                 ]);
             }),
             'created_at'       => $this->created_at,
