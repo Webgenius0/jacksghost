@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\League;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LeagueContentResource;
 use App\Http\Resources\LeagueResource;
+use App\Models\CurrentTeam;
 use App\Models\DraftPlayer;
 use App\Models\League;
 use App\Models\Year;
@@ -90,27 +91,46 @@ class LeagueController extends Controller
 
     public function searchPlayers(Request $request)
     {
+        if (!$request->filled('sport')) {
+            return $this->success(
+                'Please select a value for all filters',
+                [],
+                200
+            );
+        }
+
+        if (
+            !$request->filled('name') &&
+            !$request->filled('year') &&
+            !$request->filled('current_team')
+        ) {
+            return $this->success(
+                'Please select a value for all filters',
+                [],
+                200
+            );
+        }
+
         $query = DraftPlayer::query();
+
+        $query->whereHas('league', function ($q) use ($request) {
+            $q->where('league_name', $request->sport);
+        });
+
+        if ($request->filled('name')) {
+            $name = $request->name;
+
+            $query->where(function ($q) use ($name) {
+                $q->where('first_name', $name)
+                ->orWhere('last_name', $name);
+            });
+        }
 
         if ($request->filled('year')) {
             $query->where('year', $request->year);
         }
-
-        if ($request->filled('sports_type')) {
-            $query->whereHas('league', function ($q) use ($request) {
-                $q->where('league_name', $request->sports_type);
-            });
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('position', 'like', "%{$search}%")
-                    ->orWhere('current_team', 'like', "%{$search}%");
-            });
+        if ($request->filled('current_team')) {
+            $query->where('current_team', $request->current_team);
         }
 
         $players = $query->get();
@@ -118,6 +138,30 @@ class LeagueController extends Controller
         return $this->success(
             'Draft players retrieved successfully!',
             $players,
+            200
+        );
+    }
+
+
+
+    public function CurrentTeam(Request $request)
+    {
+        $league = League::with('currentTeams')->where('league_name', $request->sport)->first();
+
+        if (!$league) {
+            return $this->error('League not found', 404);
+        }
+
+        $teams = $league->currentTeams->map(function ($team) {
+            return [
+                'id' => $team->id,
+                'team_name' => $team->team_name,
+            ];
+        });
+
+        return $this->success(
+            'Current Team retrieved successfully!',
+            $teams,
             200
         );
     }
