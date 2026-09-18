@@ -133,7 +133,30 @@ class LeagueController extends Controller
             $query->where('current_team', $request->current_team);
         }
 
-        $players = $query->get();
+        $players = $query->get()->map(function ($player) {
+            return [
+                'id'            => $player->id,
+                'sport'         => $player->league->league_name,
+                "year"          => $player->year,
+                "round"         => $player->round,
+                "pick"          => $player->pick,
+                "first_name"    => $player->first_name,
+                "last_name"     => $player->last_name,
+                "position"      => $player->position,
+                "current_team"  => $player->current_team,
+                "draft_team"    => $player->draft_team,
+                "school"        => $player->school,
+                "slug"          => $player->slug,
+                "agent_name"    => $player->agent_name,
+                "agency_name"   => $player->agency_name,
+                "height"        => $player->height,
+                "weight"        => $player->weight,
+                "birthdate"     => $player->birthdate,
+                "nationality"   => $player->nationality,
+                "status"        => $player->status,
+                "player_name"   => $player->player_name,
+            ];
+        });
 
         return $this->success(
             'Draft players retrieved successfully!',
