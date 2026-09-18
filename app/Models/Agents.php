@@ -21,12 +21,14 @@ class Agents extends Model
         'background_info',
         'notable_client',
         'status',
+        'is_public',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'notable_client' => 'array',
+        'is_public' => 'boolean',
     ];
         
     public function certifications()

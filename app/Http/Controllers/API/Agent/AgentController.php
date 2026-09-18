@@ -268,7 +268,7 @@ class AgentController extends Controller
     public function getListingAgents(Request $request)
     {
         $agents = Agents::with('services')->where('status', 'approved')
-            ->take(11)
+            ->where('is_public', true)
             ->get();
 
         $formattedAgents = $agents->map(function ($agent) {
@@ -293,7 +293,7 @@ class AgentController extends Controller
 
     public function getAgentDetail($slug)
     {
-        $agent = Agents::with('services', 'certifications')->where('slug', $slug)->where('status', 'approved')->first();
+        $agent = Agents::with('services', 'certifications')->where('slug', $slug)->where('status', 'approved')->where('is_public', true)->first();
         if (!$agent) {
             return $this->error('Agent not found.', 404);
         }

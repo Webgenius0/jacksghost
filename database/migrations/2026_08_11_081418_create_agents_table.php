@@ -27,6 +27,7 @@ return new class extends Migration
             $table->longText('background_info')->nullable();
             $table->json('notable_client')->nullable();
             $table->string('status')->default('pending'); // pending, approved, rejected
+            $table->boolean('is_public')->default(false);
             $table->timestamps();
         });
     }
