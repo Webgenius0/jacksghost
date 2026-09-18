@@ -47,6 +47,7 @@ class SocialLoginController extends Controller
                         'provider_id'       => $socialUser->getId() ?? null,
                         'role'              => 'User',
                         'timezone'          => $timezone ?? 'UTC',
+                        
                     ]);
                 }
                 Auth::login($user);

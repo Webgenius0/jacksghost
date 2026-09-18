@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Table from '@/components/Table';
-import { Trash, Edit } from 'lucide-react';
+import { Trash, Edit, LogIn, Hash } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { ConfirmDialog } from '@/components/alert-dialog';
 import { AlertDialog } from "@heroui/react";
@@ -23,6 +23,9 @@ interface UserRow {
     phone: string | null;
     avatar: string | null;
     status: 'Active' | 'Inactive';
+    last_login_date: string | null;
+    login_count: number;
+    last_ip: string | null;
     created_at: string;
 }
 
@@ -48,6 +51,8 @@ const columns = [
     { label: 'Name', key: 'name', sortable: true },
     { label: 'Email', key: 'email', sortable: true },
     { label: 'Phone', key: 'phone', sortable: true },
+    { label: 'Login Count', key: 'login_count', sortable: true },
+    { label: 'Last Login', key: 'last_login_date', sortable: true },
     { label: 'Status', key: 'status', sortable: true },
     { label: 'Actions', key: 'actions' },
 ];
@@ -124,6 +129,38 @@ export default function Index({ users, filters }: Props) {
                                                 <img src={row.avatar.startsWith('http') ? row.avatar : `/${row.avatar}`} alt={row.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-xs text-gray-400">No Img</span>
+                                            )}
+                                        </div>
+                                    );
+                                }
+
+                                if (key === 'login_count') {
+                                    const count = Number(row.login_count ?? 0);
+                                    return (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                                            <Hash className="w-3 h-3" />
+                                            {count}
+                                        </span>
+                                    );
+                                }
+
+                                if (key === 'last_login_date') {
+                                    if (!row.last_login_date) {
+                                        return <span className="text-xs text-gray-400 dark:text-gray-500 italic">Never</span>;
+                                    }
+                                    const date = new Date(row.last_login_date);
+                                    const formattedDate = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                                    const formattedTime = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                                    return (
+                                        <div className="flex flex-col text-xs leading-tight">
+                                            <span className="inline-flex items-center gap-1 font-medium text-gray-800 dark:text-gray-200">
+                                                <LogIn className="w-3 h-3 text-gray-400" />
+                                                {formattedDate} {formattedTime}
+                                            </span>
+                                            {row.last_ip && (
+                                                <span className="text-[11px] text-gray-400 dark:text-gray-500 font-mono mt-0.5 pl-4">
+                                                    {row.last_ip}
+                                                </span>
                                             )}
                                         </div>
                                     );

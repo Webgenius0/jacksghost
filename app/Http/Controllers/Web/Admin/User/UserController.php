@@ -27,6 +27,9 @@ class UserController extends Controller
                 'phone',
                 'avatar',
                 'status',
+                'last_login_date',
+                'login_count',
+                'last_ip',
                 'created_at',
             ])->search(['name', 'email', 'phone'])->paginateData();
 

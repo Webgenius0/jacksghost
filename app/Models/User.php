@@ -33,6 +33,9 @@ class User extends Authenticatable
         'provider_token',
         'phone',
         'timezone',
+        'last_login_date',
+        'login_count',
+        'last_ip'
     ];
 
     /**
@@ -63,6 +66,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_date' => 'datetime',
         ];
     }
 }

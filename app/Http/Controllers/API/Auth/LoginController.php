@@ -44,6 +44,10 @@ class LoginController extends Controller
             $user->setRememberToken(Str::random(60));
         }
 
+        $user->last_login_date = now();
+        $user->login_count = ($user->login_count ?? 0) + 1;
+        $user->last_ip = $request->ip();
+
         $user->save();
 
         $platform = request()->header('Platform', 'unknown');
@@ -57,13 +61,29 @@ class LoginController extends Controller
         //     'token_id' => $tokenResult->accessToken->id,
         // ]);
 
+        $data = [
+            "id"                => $user->id,
+            "name"              => $user->name,
+            "email"             => $user->email,
+            "email_verified_at" => $user->email_verified_at,
+            "role"              => $user->role,
+            "provider"          => $user->provider,
+            "provider_id"       => $user->provider_id,
+            "provider_token"    => $user->provider_token,
+            "phone"             => $user->phone,
+            "avatar"            => $user->avatar,
+            "timezone"          => $user->timezone,
+            "status"            => $user->status,
+            "created_at"        => $user->created_at,
+            "updated_at"        => $user->updated_at
+        ];
+
         return response()->json([
-            'status' => 200,
-            'message' => 'Login Successful',
+            'status'    => 200,
+            'message'   => 'Login Successful',
             'token_type' => 'Bearer',
-            'token' => $tokenResult->plainTextToken,
-            // 'session_id' => $session->id,
-            'data' => $user
+            'token'     => $tokenResult->plainTextToken,
+            'data'      => $data
         ]);
     }
 
