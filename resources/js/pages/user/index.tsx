@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Table from '@/components/Table';
-import { Trash, Edit, LogIn, Hash } from 'lucide-react';
+import { Trash, Edit, LogIn, Hash, BadgeCheck, ShieldCheck } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { ConfirmDialog } from '@/components/alert-dialog';
 import { AlertDialog } from "@heroui/react";
@@ -15,6 +15,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+
+interface ActiveSubscription {
+    id: number;
+    subscription_status: string;
+    subscription_expire_date: string | null;
+}
 
 interface UserRow {
     id: number;
@@ -27,6 +33,7 @@ interface UserRow {
     login_count: number;
     last_ip: string | null;
     created_at: string;
+    active_subscription: ActiveSubscription | null;
 }
 
 interface PaginatedUsers {
@@ -51,6 +58,7 @@ const columns = [
     { label: 'Name', key: 'name', sortable: true },
     { label: 'Email', key: 'email', sortable: true },
     { label: 'Phone', key: 'phone', sortable: true },
+    { label: 'Subscription', key: 'active_subscription', sortable: false },
     { label: 'Login Count', key: 'login_count', sortable: true },
     { label: 'Last Login', key: 'last_login_date', sortable: true },
     { label: 'Status', key: 'status', sortable: true },
@@ -65,6 +73,14 @@ export default function Index({ users, filters }: Props) {
         router.delete(route('user.destroy', id), {
             onSuccess: () => toast.success('User deleted successfully!'),
             onError: () => toast.error('Failed to delete user.'),
+        });
+    };
+
+    const grantSubscription = (id: number, name: string) => {
+        router.post(route('user.grantSubscription', id), {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success(`1-year subscription granted to ${name}!`),
+            onError: () => toast.error('Failed to grant subscription.'),
         });
     };
 
@@ -129,6 +145,37 @@ export default function Index({ users, filters }: Props) {
                                                 <img src={row.avatar.startsWith('http') ? row.avatar : `/${row.avatar}`} alt={row.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-xs text-gray-400">No Img</span>
+                                            )}
+                                        </div>
+                                    );
+                                }
+
+                                if (key === 'active_subscription') {
+                                    const sub = row.active_subscription;
+                                    const isActive = !!sub;
+                                    const expiry = sub?.subscription_expire_date
+                                        ? new Date(sub.subscription_expire_date).toLocaleDateString(undefined, {
+                                            year: 'numeric', month: 'short', day: 'numeric',
+                                          })
+                                        : null;
+                                    return (
+                                        <div className="flex flex-col gap-1">
+                                            {isActive ? (
+                                                <>
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 w-fit">
+                                                        <ShieldCheck className="w-3 h-3" />
+                                                        Active
+                                                    </span>
+                                                    {expiry && (
+                                                        <span className="text-[11px] text-gray-400 dark:text-gray-500 pl-0.5">
+                                                            Expires: {expiry}
+                                                        </span>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border border-gray-200/60 dark:border-gray-700/60 w-fit">
+                                                    No subscription
+                                                </span>
                                             )}
                                         </div>
                                     );
@@ -202,14 +249,50 @@ export default function Index({ users, filters }: Props) {
                                 }
 
                                 if (key === 'actions') {
+                                    const isSubscribed = !!row.active_subscription;
+                                    const expiryFormatted = row.active_subscription?.subscription_expire_date
+                                        ? new Date(row.active_subscription.subscription_expire_date).toLocaleDateString(undefined, {
+                                            year: 'numeric', month: 'long', day: 'numeric',
+                                          })
+                                        : null;
                                     return (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 flex-wrap">
                                             <Link
                                                 href={route('user.edit', row.id)}
                                                 className={buttonVariants({ variant: 'secondary', size: 'icon' })}
                                             >
                                                 <Edit className="w-4 h-4 text-blue-500" />
                                             </Link>
+
+                                            {!isSubscribed && (
+                                                <ConfirmDialog
+                                                    title="Grant Subscription?"
+                                                    description={`This will grant ${row.name} a free 1-year subscription. Are you sure?`}
+                                                    onConfirm={() => grantSubscription(row.id, row.name)}
+                                                    confirmText="Grant"
+                                                    confirmColor="primary"
+                                                    icon={<BadgeCheck className="size-5" />}
+                                                    trigger={
+                                                        <AlertDialog.Trigger
+                                                            className={buttonVariants({ variant: 'secondary', size: 'icon' })}
+                                                            title="Grant 1-year subscription"
+                                                        >
+                                                            <BadgeCheck className="w-4 h-4 text-amber-500" />
+                                                        </AlertDialog.Trigger>
+                                                    }
+                                                />
+                                            )}
+
+                                            {isSubscribed && (
+                                                <button
+                                                    className={buttonVariants({ variant: 'secondary', size: 'icon' })}
+                                                    title={`Subscribed until ${expiryFormatted}`}
+                                                    disabled
+                                                >
+                                                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                                </button>
+                                            )}
+
                                             <ConfirmDialog
                                                 title="Delete this User?"
                                                 description="Are you sure you want to delete this User? This action cannot be undone."

@@ -25,6 +25,7 @@ Route::patch('/notification/{notification}/unresolved', [NotificationController:
 
 Route::get('/user/export-csv', [UserController::class, 'exportCsv'])->name('user.exportCsv');
 Route::patch('/user/{user}/status', [UserController::class, 'updateStatus'])->name('user.updateStatus');
+Route::post('/user/{user}/grant-subscription', [UserController::class, 'grantSubscription'])->name('user.grantSubscription');
 Route::delete('/user/{user}', [UserController::class, 'destroy'])->name('user.destroy');
 Route::resource('/user', UserController::class);
 

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Web\Admin\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Subscription;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,7 +34,7 @@ class UserController extends Controller
                 'login_count',
                 'last_ip',
                 'created_at',
-            ])->search(['name', 'email', 'phone'])->paginateData();
+            ])->with(['activeSubscription'])->search(['name', 'email', 'phone'])->paginateData();
 
         return Inertia::render('user/index', [
             'users' => $users,
@@ -127,5 +130,33 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->back()->with('success', 'User deleted successfully!');
+    }
+
+    /**
+     * Manually grant a 1-year subscription to a user (admin action).
+     */
+    public function grantSubscription(User $user)
+    {
+        $settings = SystemSetting::first();
+        $amount   = $settings?->subscription_fee ?? 0;
+
+        // Cancel any existing active subscriptions first
+        Subscription::where('user_id', $user->id)
+            ->where('subscription_status', 'active')
+            ->update(['subscription_status' => 'canceled']);
+
+        Subscription::create([
+            'user_id'                  => $user->id,
+            'stripe_email'             => $user->email,
+            'stripe_customer_id'       => null,
+            'stripe_subscription_id'   => null,
+            'amount'                   => $amount,
+            'subscribe_date'           => now(),
+            'subscription_status'      => 'active',
+            'subscription_expire_date' => now()->addYear(),
+            'uuid'                     => (string) Str::uuid(),
+        ]);
+
+        return redirect()->back()->with('success', "Subscription granted to {$user->name} for 1 year.");
     }
 }

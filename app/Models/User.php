@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Traits\Searchable;
+use App\Models\Subscription;
 
 class User extends Authenticatable
 {
@@ -54,6 +55,17 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute()
     {
         return $this->avatar ? asset($this->avatar) : asset('uploads/user/default.png');
+    }
+
+    /**
+     * Get the user's currently active subscription.
+     */
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('subscription_status', 'active')
+            ->where('subscription_expire_date', '>', now())
+            ->latest();
     }
 
     /**
