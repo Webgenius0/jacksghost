@@ -18,10 +18,6 @@ class CorsMiddleware
         $response = $next($request);
 
         $allowedOrigins = [
-            'https://peptidelabs.netlify.app',
-            'https://ayevto1.thewarriors.team',
-            'https://peptidelabsusa.com',
-            'https://api.peptidelabsusa.com',
             'http://localhost:5173',
             'http://localhost:5174',
         ];

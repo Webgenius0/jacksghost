@@ -12,15 +12,23 @@ class AdminMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(Auth::check() && Auth::user()->role == 'Admin'){
-            return $next($request);
+        if (Auth::check()) {
+            if (Auth::user()->role === 'Admin' && Auth::user()->status !== 'Inactive') {
+                return $next($request);
+            }
+
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => __('auth.failed'),
+            ]);
         }
 
-        return redirect()->route('home')->with('error', 'Please login to access this page.');
-
+        return redirect()->route('login')->with('error', 'Please login to access this page.');
     }
 }

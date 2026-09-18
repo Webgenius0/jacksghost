@@ -20,7 +20,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('agents/export', [AgentController::class, 'export'])->name('agents.export');
     Route::get('agents/template', [AgentController::class, 'template'])->name('agents.template');
     Route::post('agents/import', [AgentController::class, 'import'])->name('agents.import');

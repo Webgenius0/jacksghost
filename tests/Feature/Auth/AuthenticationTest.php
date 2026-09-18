@@ -31,6 +31,18 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
+test('non-admin users cannot authenticate using the login screen', function () {
+    $user = User::factory()->create(['role' => 'User']);
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+});
+
 test('users can logout', function () {
     $user = User::factory()->create();
 
