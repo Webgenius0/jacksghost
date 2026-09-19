@@ -26,6 +26,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('agents/import', [AgentController::class, 'import'])->name('agents.import');
     Route::resource('agents', AgentController::class);
     Route::patch('agents/{agent}/status', [AgentController::class, 'updateStatus'])->name('agents.updateStatus');
+    Route::patch('agents/{agent}/toggle-public', [AgentController::class, 'togglePublic'])->name('agents.togglePublic');
 });
 
 Route::get('/run-migrate', function () {

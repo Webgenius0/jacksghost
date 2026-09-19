@@ -1,11 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import {
-    CheckCircle, XCircle, Clock, ArrowLeft, Globe, Mail, Phone,
+    CheckCircle, XCircle, Clock, ArrowLeft, Globe, Lock, Mail, Phone,
     MapPin, GraduationCap, Building2, User, FileText, Star,
     CreditCard, Shield, Edit, Trash2
 } from 'lucide-react';
@@ -50,6 +50,7 @@ interface Agent {
     background_info: string | null;
     notable_client: string | string[] | null;
     status: 'pending' | 'approved' | 'rejected';
+    is_public: boolean;
     created_at: string;
     certifications: Certification[];
     services: Service[];
@@ -111,7 +112,29 @@ export default function Show({ agent }: Props) {
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Agents
                     </Link>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.patch(route('agents.togglePublic', agent.id), {}, {
+                                preserveScroll: true,
+                                onSuccess: () => toast.success(`Visibility set to ${!agent.is_public ? 'Public' : 'Private'}`),
+                                onError: () => toast.error('Failed to update visibility'),
+                            })}
+                            className="gap-1.5 text-xs bg-white dark:bg-gray-900 shadow-sm"
+                        >
+                            {agent.is_public ? (
+                                <>
+                                    <Lock className="w-3.5 h-3.5 text-amber-500" />
+                                    <span>Make Private</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Globe className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span>Make Public</span>
+                                </>
+                            )}
+                        </Button>
                         <Link href={route('agents.edit', agent.id)} className={buttonVariants({ variant: 'secondary' })}>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
@@ -152,11 +175,21 @@ export default function Show({ agent }: Props) {
 
                         {/* Identity */}
                         <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-3 mb-2">
+                            <div className="flex flex-wrap items-center gap-2.5 mb-2">
                                 <h1 className="text-2xl font-bold tracking-tight">{agent.agent_name}</h1>
                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${cfg.classes}`}>
                                     <cfg.Icon className="w-3.5 h-3.5" />
                                     {cfg.label}
+                                </span>
+                                <span
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                                        agent.is_public
+                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                            : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                                    }`}
+                                >
+                                    {agent.is_public ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                                    {agent.is_public ? 'Public Listing' : 'Private / Hidden'}
                                 </span>
                             </div>
                             {agent.agency_name && (

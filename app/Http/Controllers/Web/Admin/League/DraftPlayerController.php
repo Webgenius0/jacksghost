@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Admin\League;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agents;
+use App\Models\CurrentTeam;
 use App\Models\DraftPlayer;
 use App\Models\League;
 use App\Models\Year;
@@ -86,9 +87,14 @@ class DraftPlayerController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
+        $currentTeams = CurrentTeam::select('id', 'league_id', 'team_name')
+            ->orderBy('team_name')
+            ->get();
+
         return Inertia::render('draft-player/create', [
-            'leagues' => $leagues,
-            'years'   => $years,
+            'leagues'      => $leagues,
+            'years'        => $years,
+            'currentTeams' => $currentTeams,
         ]);
     }
 
@@ -157,10 +163,15 @@ class DraftPlayerController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
+        $currentTeams = CurrentTeam::select('id', 'league_id', 'team_name')
+            ->orderBy('team_name')
+            ->get();
+
         return Inertia::render('draft-player/edit', [
-            'draftPlayer' => $draftPlayer,
-            'leagues'     => $leagues,
-            'years'       => $years,
+            'draftPlayer'  => $draftPlayer,
+            'leagues'      => $leagues,
+            'years'        => $years,
+            'currentTeams' => $currentTeams,
         ]);
     }
 

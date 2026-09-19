@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import ImageUpload from '@/components/ImageUpload';
 import InputError from '@/components/input-error';
 import { toast } from 'sonner';
@@ -27,6 +28,7 @@ import {
     Phone,
     MapPin,
     Globe,
+    Lock,
     GraduationCap,
     CheckCircle,
     XCircle,
@@ -61,6 +63,7 @@ type CreateAgentForm = {
     services: string[];
     certifications: CertificationItem[];
     status: 'pending' | 'approved' | 'rejected';
+    is_public: boolean;
     agent_photo: File | null;
 };
 
@@ -102,6 +105,7 @@ export default function Create() {
         services: [],
         certifications: [],
         status: 'approved',
+        is_public: true,
         agent_photo: null,
     });
 
@@ -249,6 +253,17 @@ export default function Create() {
                         <Badge variant="outline" className={`gap-1.5 px-2.5 py-1 text-xs font-semibold ${currentStatusCfg.classes}`}>
                             <StatusIcon className="w-3.5 h-3.5" />
                             {currentStatusCfg.label}
+                        </Badge>
+                        <Badge
+                            variant="outline"
+                            className={`gap-1.5 px-2.5 py-1 text-xs font-semibold ${
+                                data.is_public
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                            }`}
+                        >
+                            {data.is_public ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                            {data.is_public ? 'Public' : 'Private'}
                         </Badge>
                     </div>
                 </div>
@@ -790,11 +805,51 @@ export default function Create() {
                                         <InputError message={errors.status} />
                                     </div>
 
+                                    {/* Public Visibility Toggle */}
+                                    <div className="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="space-y-0.5">
+                                                <Label htmlFor="is_public" className="text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                                                    {data.is_public ? (
+                                                        <Globe className="w-3.5 h-3.5 text-emerald-500" />
+                                                    ) : (
+                                                        <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                                    )}
+                                                    Public Visibility
+                                                </Label>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    {data.is_public
+                                                        ? 'Visible in public website directory'
+                                                        : 'Hidden from public directory'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`text-[10px] px-2 py-0.5 font-semibold ${
+                                                        data.is_public
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
+                                                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                                    }`}
+                                                >
+                                                    {data.is_public ? 'Public' : 'Private'}
+                                                </Badge>
+                                                <Switch
+                                                    id="is_public"
+                                                    checked={data.is_public}
+                                                    onCheckedChange={(checked) => setData('is_public', checked)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <InputError message={errors.is_public} />
+                                    </div>
+
                                     <div className="rounded-lg p-3 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-muted-foreground space-y-1">
-                                        <p className="font-semibold text-foreground">Status Guidelines:</p>
-                                        <p>• <strong>Approved:</strong> Instantly publicly active in agent directory.</p>
-                                        <p>• <strong>Pending:</strong> Stored under pending status awaiting review.</p>
+                                        <p className="font-semibold text-foreground">Status & Visibility Guidelines:</p>
+                                        <p>• <strong>Approved:</strong> Verified agent profile.</p>
+                                        <p>• <strong>Pending:</strong> Stored under review awaiting approval.</p>
                                         <p>• <strong>Rejected:</strong> Archived or unapproved agent profile.</p>
+                                        <p>• <strong>Public:</strong> Agent appears in directory & search when approved.</p>
                                     </div>
                                 </CardContent>
                             </Card>

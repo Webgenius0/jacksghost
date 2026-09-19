@@ -17,6 +17,8 @@ import {
     FileSpreadsheet,
     ChevronDown,
     AlertTriangle,
+    Globe,
+    Lock,
     X,
 } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
@@ -54,6 +56,7 @@ interface AgentRow {
     phone_number: string | null;
     agent_photo: string | null;
     status: 'pending' | 'approved' | 'rejected';
+    is_public: boolean;
     created_at: string;
     payment: AgentPayment | null;
     actions?: string;
@@ -70,6 +73,7 @@ interface PaginatedAgents {
 interface Filters {
     search: string;
     status: string;
+    is_public?: string;
 }
 
 interface Props {
@@ -83,6 +87,7 @@ const columns: { label: string; key: keyof AgentRow; sortable?: boolean }[] = [
     { label: 'Agency', key: 'agency_name', sortable: true },
     { label: 'Email', key: 'email', sortable: true },
     { label: 'Status', key: 'status', sortable: true },
+    { label: 'Visibility', key: 'is_public', sortable: true },
     { label: 'Payment', key: 'payment', sortable: false },
     { label: 'Actions', key: 'actions' },
 ];
@@ -105,6 +110,9 @@ export default function Index({ agents, filters }: Props) {
         const params = new URLSearchParams();
         if (filters.status && filters.status !== 'all') {
             params.append('status', filters.status);
+        }
+        if (filters.is_public !== undefined && filters.is_public !== 'all') {
+            params.append('is_public', filters.is_public);
         }
         if (search) {
             params.append('search', search);
@@ -183,6 +191,28 @@ export default function Index({ agents, filters }: Props) {
                                         <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="approved">Approved</SelectItem>
                                         <SelectItem value="rejected">Rejected</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select
+                                    value={filters.is_public !== undefined ? String(filters.is_public) : 'all'}
+                                    onValueChange={(val) => {
+                                        const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+                                        if (val === 'all') {
+                                            delete params.is_public;
+                                        } else {
+                                            params.is_public = val;
+                                        }
+                                        router.get(window.location.pathname, { ...params, page: 1 }, { preserveState: true, replace: true });
+                                    }}
+                                >
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="Visibility" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Visibility</SelectItem>
+                                        <SelectItem value="1">Public Only</SelectItem>
+                                        <SelectItem value="0">Private Only</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -331,6 +361,40 @@ export default function Index({ agents, filters }: Props) {
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
+                                    );
+                                }
+
+                                /* ── Public Visibility ─────────────────────── */
+                                if (key === 'is_public') {
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                router.patch(route('agents.togglePublic', row.id), {}, {
+                                                    preserveScroll: true,
+                                                    onSuccess: () => toast.success('Agent visibility updated!'),
+                                                    onError: () => toast.error('Failed to update visibility.'),
+                                                });
+                                            }}
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer hover:opacity-80 active:scale-95 ${
+                                                row.is_public
+                                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800'
+                                                    : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                            }`}
+                                            title="Click to toggle public visibility"
+                                        >
+                                            {row.is_public ? (
+                                                <>
+                                                    <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                    <span>Public</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                                    <span>Private</span>
+                                                </>
+                                            )}
+                                        </button>
                                     );
                                 }
 

@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
-import { League, Year, DraftPlayer } from '@/types';
+import { League, Year, DraftPlayer, CurrentTeam } from '@/types';
 import { FormEventHandler } from 'react';
 
 
@@ -19,12 +19,13 @@ interface Props {
     draftPlayer: DraftPlayer;
     leagues: League[];
     years: Year[];
+    currentTeams: CurrentTeam[];
 }
 
 const SELECT_CLASS =
     'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function Edit({ draftPlayer, leagues, years }: Props) {
+export default function Edit({ draftPlayer, leagues, years, currentTeams }: Props) {
     const { data, setData, errors, post, processing } = useForm({
         _method:     'put',
         league_id:   String(draftPlayer.league_id ?? ''),
@@ -90,7 +91,10 @@ export default function Edit({ draftPlayer, leagues, years }: Props) {
                                         id="edit_league_id"
                                         className={SELECT_CLASS}
                                         value={data.league_id}
-                                        onChange={(e) => setData('league_id', e.target.value)}
+                                        onChange={(e) => {
+                                            setData('league_id', e.target.value);
+                                            setData('current_team', '');
+                                        }}
                                         disabled={processing}
                                         required
                                     >
@@ -170,13 +174,22 @@ export default function Edit({ draftPlayer, leagues, years }: Props) {
                                 {/* Current Team */}
                                 <div className="flex flex-col space-y-1.5">
                                     <Label htmlFor="edit_current_team">Current Team</Label>
-                                    <Input
+                                    <select
                                         id="edit_current_team"
+                                        className={SELECT_CLASS}
                                         value={data.current_team}
                                         onChange={(e) => setData('current_team', e.target.value)}
-                                        placeholder="e.g. Mariners, Lakers"
                                         disabled={processing}
-                                    />
+                                    >
+                                        <option value="">Select a team</option>
+                                        {currentTeams
+                                            .filter((t) => data.league_id && String(t.league_id) === String(data.league_id))
+                                            .map((t) => (
+                                                <option key={t.id} value={t.team_name}>
+                                                    {t.team_name}
+                                                </option>
+                                            ))}
+                                    </select>
                                     <InputError message={errors.current_team} />
                                 </div>
 

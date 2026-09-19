@@ -34,6 +34,7 @@ class AgentController extends Controller
                 'phone_number',
                 'agent_photo',
                 'status',
+                'is_public',
                 'created_at',
             ]);
 
@@ -50,11 +51,15 @@ class AgentController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('is_public') && $request->is_public !== 'all') {
+            $query->where('is_public', filter_var($request->is_public, FILTER_VALIDATE_BOOLEAN));
+        }
+
         $agents = $query->latest()->paginate($request->per_page ?? 15)->withQueryString();
 
         return Inertia::render('agent/index', [
             'agents'  => $agents,
-            'filters' => $request->only(['search', 'status', 'per_page']),
+            'filters' => $request->only(['search', 'status', 'is_public', 'per_page']),
         ]);
     }
 
@@ -84,6 +89,7 @@ class AgentController extends Controller
             'background_info'       => 'nullable|string',
             'notable_client'        => 'nullable',
             'status'                => 'required|in:pending,approved,rejected',
+            'is_public'             => 'nullable|boolean',
             'agent_photo'           => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'services'              => 'nullable|array',
             'services.*'            => 'nullable|string|max:255',
@@ -130,6 +136,7 @@ class AgentController extends Controller
             'background_info'  => $request->background_info,
             'notable_client'   => $notableClients,
             'status'           => $request->status,
+            'is_public'        => $request->boolean('is_public'),
             'agent_photo'      => $photoPath,
         ]);
 
@@ -207,6 +214,7 @@ class AgentController extends Controller
             'background_info'  => 'nullable|string',
             'notable_client'   => 'nullable',
             'status'           => 'required|in:pending,approved,rejected',
+            'is_public'        => 'nullable|boolean',
         ];
 
         if ($request->hasFile('agent_photo')) {
@@ -253,6 +261,7 @@ class AgentController extends Controller
             'background_info'  => $request->background_info,
             'notable_client'   => $notableClients,
             'status'           => $request->status,
+            'is_public'        => $request->boolean('is_public'),
             'agent_photo'      => $photoPath,
         ]);
 
@@ -271,6 +280,19 @@ class AgentController extends Controller
         $agent->update(['status' => $request->status]);
 
         return back()->with('success', 'Agent status updated to ' . ucfirst($request->status) . '.');
+    }
+
+    /**
+     * Toggle public visibility of an agent.
+     */
+    public function togglePublic(Request $request, Agents $agent): RedirectResponse
+    {
+        $agent->update([
+            'is_public' => !$agent->is_public,
+        ]);
+
+        $state = $agent->is_public ? 'Public' : 'Private';
+        return back()->with('success', "Agent visibility set to {$state}.");
     }
 
     /**
@@ -335,15 +357,16 @@ class AgentController extends Controller
             'Services',
             'Background Info',
             'Status',
+            'Public Visibility',
         ];
 
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
 
         foreach ($headers as $index => $header) {
             $sheet->setCellValue("{$columns[$index]}1", $header);
         }
 
-        $sheet->getStyle('A1:M1')->applyFromArray([
+        $sheet->getStyle('A1:N1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -381,9 +404,10 @@ class AgentController extends Controller
             $sheet->setCellValue("K{$rowIndex}", $services);
             $sheet->setCellValue("L{$rowIndex}", $agent->background_info ?? '');
             $sheet->setCellValue("M{$rowIndex}", $agent->status ?? 'pending');
+            $sheet->setCellValue("N{$rowIndex}", $agent->is_public ? 'Public' : 'Private');
 
             if ($rowIndex % 2 === 0) {
-                $sheet->getStyle("A{$rowIndex}:M{$rowIndex}")->applyFromArray([
+                $sheet->getStyle("A{$rowIndex}:N{$rowIndex}")->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['rgb' => 'F8FAFC'],
@@ -432,15 +456,16 @@ class AgentController extends Controller
             'Services',
             'Background Info',
             'Status',
+            'Public Visibility',
         ];
 
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
 
         foreach ($headers as $index => $header) {
             $sheet->setCellValue("{$columns[$index]}1", $header);
         }
 
-        $sheet->getStyle('A1:M1')->applyFromArray([
+        $sheet->getStyle('A1:N1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -472,6 +497,7 @@ class AgentController extends Controller
                 'Contract Negotiation, Brand Endorsement, Arbitration',
                 'Premier baseball agent representing top tier MLB athletes worldwide.',
                 'approved',
+                'Public',
             ],
             [
                 'Rich Paul',
@@ -487,6 +513,7 @@ class AgentController extends Controller
                 'Player Representation, Marketing, Media Production',
                 'Founder of Klutch Sports Group and leading sports executive.',
                 'approved',
+                'Public',
             ],
         ];
 
@@ -573,6 +600,8 @@ class AgentController extends Controller
                 $headerMap[$colIdx] = 'background_info';
             } elseif (in_array($normalized, ['status', 'agentstatus'])) {
                 $headerMap[$colIdx] = 'status';
+            } elseif (in_array($normalized, ['ispublic', 'public', 'visibility', 'publicvisibility', 'publicstatus'])) {
+                $headerMap[$colIdx] = 'is_public';
             }
         }
 
@@ -634,6 +663,13 @@ class AgentController extends Controller
                 }
             }
 
+            // Parse is_public
+            $isPublic = ($status === 'approved');
+            if (isset($rowData['is_public']) && $rowData['is_public'] !== '') {
+                $rawPub = strtolower(trim((string)$rowData['is_public']));
+                $isPublic = in_array($rawPub, ['1', 'true', 'yes', 'public', 'approved', 'y']);
+            }
+
             $email = !empty($rowData['email']) ? $rowData['email'] : null;
 
             try {
@@ -660,6 +696,7 @@ class AgentController extends Controller
                             'background_info'  => $rowData['background_info'] ?: $existing->background_info,
                             'notable_client'   => $notableClients ?: $existing->notable_client,
                             'status'           => $status ?: $existing->status,
+                            'is_public'        => isset($rowData['is_public']) ? $isPublic : $existing->is_public,
                         ]);
                         $agentRecord = $existing;
                         $updatedCount++;
@@ -683,6 +720,7 @@ class AgentController extends Controller
                         'background_info'  => $rowData['background_info'] ?? null,
                         'notable_client'   => $notableClients,
                         'status'           => $status,
+                        'is_public'        => $isPublic,
                     ]);
                     $createdCount++;
                 }
