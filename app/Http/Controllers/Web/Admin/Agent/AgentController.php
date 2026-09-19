@@ -215,6 +215,11 @@ class AgentController extends Controller
             'notable_client'   => 'nullable',
             'status'           => 'required|in:pending,approved,rejected',
             'is_public'        => 'nullable|boolean',
+            'services'         => 'nullable|array',
+            'services.*'       => 'nullable|string|max:255',
+            'certifications'   => 'nullable|array',
+            'certifications.*.name' => 'nullable|string|max:255',
+            'certifications.*.file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp|max:10240',
         ];
 
         if ($request->hasFile('agent_photo')) {
@@ -264,6 +269,68 @@ class AgentController extends Controller
             'is_public'        => $request->boolean('is_public'),
             'agent_photo'      => $photoPath,
         ]);
+
+        // Sync services
+        if ($request->has('services')) {
+            $agent->services()->delete();
+            if (is_array($request->services)) {
+                foreach ($request->services as $serviceName) {
+                    if (!empty(trim((string)$serviceName))) {
+                        $agent->services()->create([
+                            'service_name' => trim($serviceName),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Sync certifications
+        if ($request->has('certifications')) {
+            $submittedCerts = is_array($request->certifications) ? $request->certifications : [];
+            $keptIds = [];
+
+            foreach ($submittedCerts as $index => $cert) {
+                $certName = $cert['name'] ?? null;
+                if (empty(trim((string)$certName))) {
+                    continue;
+                }
+
+                $certId = !empty($cert['id']) ? (int)$cert['id'] : null;
+                $existingCert = $certId ? $agent->certifications()->find($certId) : null;
+                $certFilePath = $existingCert ? $existingCert->certificate_file : null;
+
+                if ($request->hasFile("certifications.{$index}.file")) {
+                    if ($certFilePath && file_exists(public_path($certFilePath))) {
+                        @unlink(public_path($certFilePath));
+                    }
+                    $uploadedFiles = $this->uploadToPublic($request->file("certifications.{$index}.file"), 'uploads/agents/certifications');
+                    $certFilePath = $uploadedFiles[0] ?? null;
+                }
+
+                if ($existingCert) {
+                    $existingCert->update([
+                        'certificate_name' => trim($certName),
+                        'certificate_file' => $certFilePath,
+                    ]);
+                    $keptIds[] = $existingCert->id;
+                } else {
+                    $newCert = $agent->certifications()->create([
+                        'certificate_name' => trim($certName),
+                        'certificate_file' => $certFilePath,
+                    ]);
+                    $keptIds[] = $newCert->id;
+                }
+            }
+
+            // Delete removed certifications
+            $removedCerts = $agent->certifications()->whereNotIn('id', $keptIds)->get();
+            foreach ($removedCerts as $rem) {
+                if ($rem->certificate_file && file_exists(public_path($rem->certificate_file))) {
+                    @unlink(public_path($rem->certificate_file));
+                }
+                $rem->delete();
+            }
+        }
 
         return redirect()->route('agents.index')->with('success', 'Agent updated successfully!');
     }

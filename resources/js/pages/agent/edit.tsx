@@ -41,6 +41,8 @@ import {
     Plus,
     X,
     Tag,
+    FileText,
+    Trash2,
 } from 'lucide-react';
 
 interface Certification {
@@ -52,6 +54,13 @@ interface Certification {
 interface Service {
     id: number;
     service_name: string;
+}
+
+interface CertificationItem {
+    id?: number;
+    name: string;
+    file: File | null;
+    existing_file?: string | null;
 }
 
 interface Agent {
@@ -91,11 +100,24 @@ type EditAgentForm = {
     graduation_year: string;
     background_info: string;
     notable_client: string[];
+    services: string[];
+    certifications: CertificationItem[];
     status: 'pending' | 'approved' | 'rejected';
     is_public: boolean;
     agent_photo: File | null;
     _method: string;
 };
+
+const SUGGESTED_SERVICES = [
+    'Contract Negotiation',
+    'Brand Endorsements',
+    'Career Management',
+    'Draft Preparation',
+    'Legal Representation',
+    'Financial Advisory',
+    'Post-Career Planning',
+    'Public Relations',
+];
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; classes: string }> = {
     pending:  { label: 'Pending',  icon: Clock,        classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200' },
@@ -140,6 +162,15 @@ export default function Edit({ agent }: Props) {
         graduation_year: agent.graduation_year || '',
         background_info: agent.background_info || '',
         notable_client: initialNotableClients,
+        services: agent.services ? agent.services.map((s) => s.service_name) : [],
+        certifications: agent.certifications
+            ? agent.certifications.map((c) => ({
+                id: c.id,
+                name: c.certificate_name,
+                file: null,
+                existing_file: c.certificate_file,
+            }))
+            : [],
         status: agent.status || 'pending',
         is_public: Boolean(agent.is_public),
         agent_photo: null,
@@ -148,6 +179,7 @@ export default function Edit({ agent }: Props) {
 
     const [selectedPhoto, setSelectedPhoto] = useState<File | string | null>(agent.agent_photo || null);
     const [clientTagInput, setClientTagInput] = useState('');
+    const [serviceInput, setServiceInput] = useState('');
 
     const handleAddClientTag = (tagToAdd?: string) => {
         const value = (tagToAdd ?? clientTagInput).trim();
@@ -182,6 +214,58 @@ export default function Edit({ agent }: Props) {
             e.preventDefault();
             handleRemoveClientTag(data.notable_client.length - 1);
         }
+    };
+
+    /* ── Services Handlers ────────────────────────────────────────── */
+    const handleAddService = (serviceName?: string) => {
+        const value = (serviceName ?? serviceInput).trim();
+        if (!value) return;
+
+        if (!data.services.includes(value)) {
+            setData('services', [...data.services, value]);
+        }
+        setServiceInput('');
+    };
+
+    const handleRemoveService = (indexToRemove: number) => {
+        setData(
+            'services',
+            data.services.filter((_, idx) => idx !== indexToRemove)
+        );
+    };
+
+    const handleServiceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            handleAddService();
+        }
+    };
+
+    /* ── Certifications Handlers ──────────────────────────────────── */
+    const handleAddCertificationRow = () => {
+        setData('certifications', [
+            ...data.certifications,
+            { name: '', file: null, existing_file: null },
+        ]);
+    };
+
+    const handleUpdateCertificationName = (index: number, name: string) => {
+        const updated = [...data.certifications];
+        updated[index].name = name;
+        setData('certifications', updated);
+    };
+
+    const handleUpdateCertificationFile = (index: number, file: File | null) => {
+        const updated = [...data.certifications];
+        updated[index].file = file;
+        setData('certifications', updated);
+    };
+
+    const handleRemoveCertification = (indexToRemove: number) => {
+        setData(
+            'certifications',
+            data.certifications.filter((_, idx) => idx !== indexToRemove)
+        );
     };
 
     const handleSubmit: FormEventHandler = (e) => {
@@ -567,6 +651,203 @@ export default function Edit({ agent }: Props) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Section 3: Services Provided */}
+                            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                        <Briefcase className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                        Services Provided
+                                    </CardTitle>
+                                    <CardDescription>Add services and areas of representation offered by this agent</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Active Services */}
+                                    <div className="space-y-2">
+                                        {data.services.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {data.services.map((service, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 transition-all shadow-xs"
+                                                    >
+                                                        <span>{service}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveService(index)}
+                                                            className="hover:bg-emerald-200/60 dark:hover:bg-emerald-800/80 rounded p-0.5 transition-colors"
+                                                            title={`Remove ${service}`}
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground italic">No services added yet. Add custom services or pick from suggestions below.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Input & Add Custom Service */}
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            value={serviceInput}
+                                            onChange={(e) => setServiceInput(e.target.value)}
+                                            onKeyDown={handleServiceKeyDown}
+                                            placeholder="Type a service (e.g. Contract Negotiation) and press Enter..."
+                                            className="bg-background text-xs"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            onClick={() => handleAddService()}
+                                            disabled={!serviceInput.trim()}
+                                            className="gap-1.5 text-xs flex-shrink-0"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Add Service
+                                        </Button>
+                                    </div>
+
+                                    {/* Quick Suggestions */}
+                                    <div className="pt-2">
+                                        <span className="text-[11px] font-semibold text-muted-foreground block mb-2">Quick suggestions:</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {SUGGESTED_SERVICES.map((suggested) => {
+                                                const isSelected = data.services.includes(suggested);
+                                                return (
+                                                    <button
+                                                        key={suggested}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setData('services', data.services.filter((s) => s !== suggested));
+                                                            } else {
+                                                                handleAddService(suggested);
+                                                            }
+                                                        }}
+                                                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                                                            isSelected
+                                                                ? 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700 font-medium'
+                                                                : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        {isSelected ? '✓ ' : '+ '}
+                                                        {suggested}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <InputError message={errors.services} />
+                                </CardContent>
+                            </Card>
+
+                            {/* Section 4: Certifications */}
+                            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                                <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                            <Award className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                            Certifications & Licenses
+                                        </CardTitle>
+                                        <CardDescription>Upload professional licenses and official certificates</CardDescription>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleAddCertificationRow}
+                                        className="gap-1.5 text-xs"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Add Certificate
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {data.certifications.length === 0 ? (
+                                        <div className="text-center py-6 border border-dashed rounded-lg bg-muted/20">
+                                            <Award className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                                            <p className="text-xs text-muted-foreground">No certifications added.</p>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleAddCertificationRow}
+                                                className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 gap-1"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                                Add First Certificate
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {data.certifications.map((cert, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="p-3.5 rounded-lg border border-border bg-card/60 space-y-3 relative group"
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                                            <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                            Certificate #{index + 1}
+                                                        </span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleRemoveCertification(index)}
+                                                            className="h-7 w-7 text-muted-foreground hover:text-rose-500"
+                                                            title="Remove certificate"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[11px] font-medium">Certificate Name</Label>
+                                                            <Input
+                                                                value={cert.name}
+                                                                onChange={(e) => handleUpdateCertificationName(index, e.target.value)}
+                                                                placeholder="e.g. FIFA Licensed Agent, NBPA Certified"
+                                                                className="text-xs bg-background"
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[11px] font-medium">Document / File (Optional)</Label>
+                                                            <Input
+                                                                type="file"
+                                                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                                                onChange={(e) => {
+                                                                    const f = e.target.files?.[0] || null;
+                                                                    handleUpdateCertificationFile(index, f);
+                                                                }}
+                                                                className="text-xs bg-background file:text-xs file:font-medium"
+                                                            />
+                                                            {cert.existing_file && !cert.file && (
+                                                                <p className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1">
+                                                                    <FileText className="w-3 h-3 flex-shrink-0" />
+                                                                    <a
+                                                                        href={cert.existing_file.startsWith('http') ? cert.existing_file : `/${cert.existing_file}`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="hover:underline truncate max-w-[220px]"
+                                                                    >
+                                                                        Current: {cert.existing_file.split('/').pop()}
+                                                                    </a>
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <InputError message={errors.certifications} />
+                                </CardContent>
+                            </Card>
                         </div>
 
                         {/* Right 1 Column: Status, Photo, Overview */}
@@ -676,45 +957,6 @@ export default function Edit({ agent }: Props) {
                                     <p className="text-xs text-muted-foreground">
                                         Recommended: square aspect ratio, max 3MB (JPEG, PNG, WebP).
                                     </p>
-                                </CardContent>
-                            </Card>
-
-                            {/* Attached Records Summary */}
-                            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                        <Briefcase className="w-4 h-4 text-indigo-500" />
-                                        Associated Records
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3 text-xs">
-                                    <div>
-                                        <span className="font-semibold text-muted-foreground block mb-1">Services Provided:</span>
-                                        {agent.services && agent.services.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {agent.services.map((s) => (
-                                                    <Badge key={s.id} variant="secondary" className="text-xs font-normal">
-                                                        {s.service_name}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-muted-foreground italic">No services listed</p>
-                                        )}
-                                    </div>
-
-                                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                                        <span className="font-semibold text-muted-foreground block mb-1">Certifications:</span>
-                                        {agent.certifications && agent.certifications.length > 0 ? (
-                                            <ul className="space-y-1 list-disc list-inside text-foreground">
-                                                {agent.certifications.map((c) => (
-                                                    <li key={c.id}>{c.certificate_name}</li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-muted-foreground italic">No certifications uploaded</p>
-                                        )}
-                                    </div>
                                 </CardContent>
                             </Card>
 
