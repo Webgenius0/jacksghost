@@ -192,7 +192,7 @@ class LeagueController extends Controller
             ->get()
             ->map(function ($player) {
                 return [
-                    'name' => trim($player->first_name . ' ' . $player->last_name),
+                    'name' => $player->last_name,
                 ];
             });
 
