@@ -23,6 +23,9 @@ Route::patch('/notification/{notification}/resolved', [NotificationController::c
 Route::patch('/notification/{notification}/unresolved', [NotificationController::class, 'markUnresolved'])->name('notification.unresolved');
 
 
+Route::get('/user/export', [UserController::class, 'export'])->name('user.export');
+Route::get('/user/template', [UserController::class, 'template'])->name('user.template');
+Route::post('/user/import', [UserController::class, 'import'])->name('user.import');
 Route::get('/user/export-csv', [UserController::class, 'exportCsv'])->name('user.exportCsv');
 Route::patch('/user/{user}/status', [UserController::class, 'updateStatus'])->name('user.updateStatus');
 Route::post('/user/{user}/grant-subscription', [UserController::class, 'grantSubscription'])->name('user.grantSubscription');

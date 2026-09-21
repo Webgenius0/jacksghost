@@ -166,6 +166,41 @@ class LeagueController extends Controller
     }
 
 
+    public function nameSuggestions(Request $request)
+    {
+        $search   = $request->input('search');
+        $leagueId = $request->input('league_id');
+
+        $query = DraftPlayer::query()
+            ->select('id', 'first_name', 'last_name', 'league_id')
+            ->whereNotNull('first_name')
+            ->whereNotNull('last_name');
+
+        if ($leagueId) {
+            $query->where('league_id', $leagueId);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('last_name', 'like', "{$search}%");
+            });
+        }
+
+        $players = $query
+            ->orderBy('last_name')
+            ->limit(10)
+            ->get()
+            ->map(function ($player) {
+                return [
+                    'name' => trim($player->first_name . ' ' . $player->last_name),
+                ];
+            });
+
+        return response()->json($players);
+    }
+
+
+
 
     public function CurrentTeam(Request $request)
     {

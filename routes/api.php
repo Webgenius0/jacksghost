@@ -100,6 +100,7 @@ Route::group(['middleware' => 'auth:sanctum'], function ($router) {
     Route::get('/user/search-agents/{slug}', [AgentController::class, 'searchAgentsDetail']);
     Route::get('/user/search-players', [LeagueController::class, 'searchPlayers']);
     Route::get('/current-team', [LeagueController::class, 'CurrentTeam']);
+    Route::get('/name-suggestions', [LeagueController::class, 'nameSuggestions']);
 
     //session
     Route::post('/session/start', [TrackController::class, 'start']);
